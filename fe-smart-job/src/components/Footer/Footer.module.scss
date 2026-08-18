@@ -1,0 +1,70 @@
+.footer {
+  width: 100%;
+  background-color: #ffffff;
+  border-top: 1px solid #c3c6d7;
+  margin-top: auto;
+}
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 40px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+
+  @media (max-width: 992px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 576px) {
+    grid-template-columns: 1fr;
+    padding: 32px 16px;
+  }
+}
+
+.brandColumn {
+  .brandTitle {
+    font-size: 20px;
+    font-weight: 700;
+    color: #131b2e;
+    margin-bottom: 16px;
+  }
+
+  .brandDesc {
+    font-size: 14px;
+    color: #434655;
+  }
+}
+
+.linkColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  a {
+    font-size: 12px;
+    font-weight: 600;
+    color: #626567;
+    text-decoration: none;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: #004ac6;
+    }
+  }
+}
+
+.copyrightBar {
+  width: 100%;
+  border-top: 1px solid #c3c6d7;
+  padding: 16px 40px;
+  text-align: center;
+
+  p {
+    font-size: 14px;
+    color: #434655;
+    margin: 0;
+  }
+}
