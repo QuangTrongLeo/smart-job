@@ -2,14 +2,12 @@ package be_smart_job.config;
 
 import be_smart_job.entity.Role;
 import be_smart_job.enums.RoleType;
-import be_smart_job.repository.RoleRepository;
+import be_smart_job.repository.identity.RoleRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import java.util.Arrays;
 
 @Configuration
 @RequiredArgsConstructor

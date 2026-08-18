@@ -1,4 +1,4 @@
-package be_smart_job.repository;
+package be_smart_job.repository.identity;
 
 import be_smart_job.entity.Role;
 import be_smart_job.enums.RoleType;
