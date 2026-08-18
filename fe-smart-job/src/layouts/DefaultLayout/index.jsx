@@ -1,5 +1,6 @@
 import Header from '~/components/Header';
 import Footer from '~/components/Footer';
+import ChatBotAI from '~/components/ChatBotAI';
 
 function DefaultLayout({ children }) {
   return (
@@ -9,6 +10,7 @@ function DefaultLayout({ children }) {
         {children}
       </main>
       <Footer />
+      <ChatBotAI />
     </div>
   );
 }

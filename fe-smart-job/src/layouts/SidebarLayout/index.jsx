@@ -1,6 +1,7 @@
 import Header from '~/components/Header';
 import Sidebar from '~/components/Sidebar';
 import Footer from '~/components/Footer';
+import ChatBotAI from '~/components/ChatBotAI';
 
 function SidebarLayout({ children }) {
   return (
@@ -17,6 +18,7 @@ function SidebarLayout({ children }) {
         </div>
       </div>
       <Footer />
+      <ChatBotAI />
     </div>
   );
 }

@@ -1,0 +1,207 @@
+// Biến màu sắc
+$primary-color: #0d6efd; // Bootstrap primary color
+$primary-hover: #0b5ed7;
+$bg-light: #f8fafc;
+$border-color: #dee2e6;
+$text-dark: #212529;
+
+// Wrapper cố định góc dưới BÊN PHẢI
+.chatbotWrapper {
+  position: fixed !important;
+  bottom: 24px !important;
+  right: 24px !important; // Chuyển sang bên phải
+  left: auto !important;
+  z-index: 999999 !important; // Z-index cực cao để không bị đè
+  pointer-events: auto;
+}
+
+// Nút tròn Nổi (FAB)
+.chatbotFab {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: $primary-color;
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  outline: none;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+
+  &:hover {
+    background-color: $primary-hover;
+    transform: scale(1.08);
+  }
+
+  i {
+    font-size: 24px;
+    line-height: 1;
+  }
+}
+
+// Cửa sổ Chat Pop-up
+.chatbotWindow {
+  position: absolute;
+  bottom: 68px; // Nằm phía trên nút tròn
+  right: 0; // Căn phải cùng với nút FAB
+  left: auto;
+  width: 340px;
+  height: 440px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  border: 1px solid $border-color;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 999999 !important;
+  animation: slideUp 0.25s ease-out;
+}
+
+// Header Khung Chat
+.chatbotHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.875rem 1rem;
+  background-color: $primary-color;
+  color: #ffffff;
+
+  .headerTitle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    font-size: 0.9375rem;
+
+    i {
+      font-size: 20px;
+    }
+  }
+
+  .btnClose {
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.25rem;
+    border-radius: 50%;
+    opacity: 0.85;
+    transition: opacity 0.2s, background-color 0.2s;
+
+    &:hover {
+      opacity: 1;
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+
+    i {
+      font-size: 18px;
+    }
+  }
+}
+
+// Body chứa tin nhắn
+.chatbotBody {
+  flex: 1;
+  padding: 1rem;
+  background-color: $bg-light;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+
+  .msgRow {
+    display: flex;
+
+    &.userRow {
+      justify-content: flex-end;
+
+      .msgBubble {
+        background-color: $primary-color;
+        color: #ffffff;
+        border-radius: 12px 12px 2px 12px;
+      }
+    }
+
+    &.botRow {
+      justify-content: flex-start;
+
+      .msgBubble {
+        background-color: #ffffff;
+        color: $text-dark;
+        border: 1px solid $border-color;
+        border-radius: 12px 12px 12px 2px;
+      }
+    }
+  }
+
+  .msgBubble {
+    padding: 0.625rem 0.875rem;
+    max-width: 80%;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    word-break: break-word;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+}
+
+// Footer ô nhập tin nhắn
+.chatbotFooter {
+  padding: 0.75rem;
+  border-top: 1px solid $border-color;
+  background-color: #ffffff;
+  display: flex;
+  gap: 0.5rem;
+
+  input {
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid $border-color;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    outline: none;
+
+    &:focus {
+      border-color: $primary-color;
+    }
+  }
+
+  .btnSend {
+    background-color: $primary-color;
+    color: #ffffff;
+    border: none;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+
+    &:hover {
+      background-color: $primary-hover;
+    }
+
+    i {
+      font-size: 16px;
+    }
+  }
+}
+
+// Hiệu ứng nảy nhẹ khi bật cửa sổ chat
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
