@@ -12,6 +12,7 @@ const routes = {
   verify: '/verify',
   freelancers: '/freelancers',
   freelancer: '/freelancer',
+  messages: '/messages',
 };
 
 export default routes;

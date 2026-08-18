@@ -1,0 +1,620 @@
+// Biến màu sắc & Font
+$font-family: 'Inter', sans-serif;
+$color-bg: #f9f9ff;
+$color-surface: #ffffff;
+$color-surface-low: #f0f3ff;
+$color-surface-container: #e7eeff;
+$color-surface-variant: #d8e3fb;
+$color-on-surface: #111c2d;
+$color-on-surface-variant: #434655;
+$color-primary: #004ac6;
+$color-primary-container: #2563eb;
+$color-on-primary-container: #eeefff;
+$color-secondary: #505f76;
+$color-outline: #737686;
+$color-outline-variant: #c3c6d7;
+$color-tertiary-dim: #4edea3;
+$color-tertiary-container: #007d55;
+$color-on-tertiary-container: #bdffdb;
+$color-error: #ba1a1a;
+$color-error-container: #ffdad6;
+
+// Khung chứa chính toàn trang
+.messagesContainer {
+  display: flex;
+  height: 100vh;
+  width: 100%; // Sửa từ 100vw thành 100% để chống tràn thanh cuộn
+  max-width: 100%;
+  background-color: $color-surface;
+  font-family: $font-family;
+  color: $color-on-surface;
+  overflow: hidden; // Khóa hoàn toàn cuộn trang bên ngoài
+  box-sizing: border-box;
+
+  * {
+    box-sizing: border-box; // Đảm bảo padding không làm tăng width
+  }
+}
+
+// Cột 1: Danh sách Chat (Chat List)
+.chatListColumn {
+  width: 20rem; // 320px
+  max-width: 30%; // Giới hạn không vượt quá 30% màn hình
+  border-right: 1px solid $color-outline-variant;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  background-color: $color-surface;
+
+  .searchBox {
+    padding: 1rem;
+    border-bottom: 1px solid $color-outline-variant;
+
+    .inputWrapper {
+      position: relative;
+
+      .searchIcon {
+        position: absolute;
+        left: 0.5rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: $color-outline;
+      }
+
+      input {
+        width: 100%;
+        padding-left: 2.25rem;
+        padding-right: 0.5rem;
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+        border: 1px solid $color-outline-variant;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        outline: none;
+        background-color: $color-bg;
+
+        &:focus {
+          border-color: $color-primary-container;
+        }
+      }
+    }
+  }
+
+  .chatListScroll {
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .chatItem {
+    padding: 1rem;
+    border-bottom: 1px solid $color-outline-variant;
+    cursor: pointer;
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    transition: background-color 0.2s;
+
+    &:hover, &.active {
+      background-color: $color-surface-container;
+    }
+
+    .avatarWrapper {
+      position: relative;
+      flex-shrink: 0;
+
+      img, .avatarText {
+        width: 2.75rem;
+        height: 2.75rem;
+        border-radius: 9999px;
+        object-fit: cover;
+      }
+
+      .avatarText {
+        background-color: $color-surface-variant;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        color: $color-secondary;
+      }
+
+      .onlineDot {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 0.75rem;
+        height: 0.75rem;
+        background-color: $color-tertiary-dim;
+        border: 2px solid $color-surface;
+        border-radius: 9999px;
+      }
+    }
+
+    .chatMeta {
+      flex: 1;
+      min-width: 0; // Ngăn flex item bị phình to bởi văn bản dài
+
+      .itemHeader {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-bottom: 0.25rem;
+
+        h4 {
+          font-size: 0.875rem;
+          font-weight: 700;
+          color: $color-on-surface;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .time {
+          font-size: 11px;
+          color: $color-outline;
+          flex-shrink: 0;
+        }
+      }
+
+      .lastMessage {
+        font-size: 0.875rem;
+        color: $color-on-surface-variant;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+  }
+}
+
+// Cột 2: Cửa sổ Chat chính (Chat Window)
+.chatWindowColumn {
+  flex: 1;
+  min-width: 0; // Bắt buộc phải có để cột giữa tự động co lại khi màn hình hẹp
+  display: flex;
+  flex-direction: column;
+  background-color: $color-surface;
+  position: relative;
+
+  .chatHeader {
+    height: 4.5rem;
+    border-bottom: 1px solid $color-outline-variant;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1.25rem;
+    flex-shrink: 0;
+
+    .userInfo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      min-width: 0;
+
+      img {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 9999px;
+        object-fit: cover;
+        flex-shrink: 0;
+      }
+
+      h2 {
+        font-size: 1.125rem;
+        font-weight: 700;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .statusText {
+        font-size: 13px;
+        color: $color-tertiary-container;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+
+        .greenDot {
+          width: 0.5rem;
+          height: 0.5rem;
+          border-radius: 9999px;
+          background-color: $color-tertiary-dim;
+        }
+      }
+    }
+
+    .headerActions {
+      display: flex;
+      gap: 0.25rem;
+      color: $color-secondary;
+      flex-shrink: 0;
+
+      button {
+        padding: 0.5rem;
+        border-radius: 9999px;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+
+        &:hover {
+          background-color: $color-surface-container;
+        }
+      }
+    }
+  }
+
+  .messagesArea {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden; // Chống tràn ngang nội dung tin nhắn
+    padding: 1.25rem;
+    background-color: $color-bg;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+
+    .timeDivider {
+      display: flex;
+      justify-content: center;
+      margin: 0.5rem 0;
+
+      span {
+        font-size: 12px;
+        background-color: $color-surface-variant;
+        color: $color-on-surface-variant;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+      }
+    }
+
+    .msgRow {
+      display: flex;
+      gap: 0.75rem;
+      max-width: 85%;
+
+      &.sent {
+        align-self: flex-end;
+        flex-direction: row-reverse;
+
+        .msgBubble {
+          background-color: $color-primary-container;
+          color: $color-on-primary-container;
+          border-radius: 1rem 0.25rem 1rem 1rem;
+          border: none;
+        }
+
+        .msgMeta {
+          text-align: right;
+          justify-content: flex-end;
+        }
+      }
+
+      .avatar {
+        width: 2rem;
+        height: 2rem;
+        border-radius: 9999px;
+        object-fit: cover;
+        flex-shrink: 0;
+        margin-top: 0.25rem;
+      }
+
+      .avatarSpacer {
+        width: 2rem;
+        flex-shrink: 0;
+      }
+
+      .msgBubble {
+        background-color: $color-surface;
+        border: 1px solid $color-outline-variant;
+        color: $color-on-surface;
+        padding: 0.875rem 1rem;
+        border-radius: 0.25rem 1rem 1rem 1rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        word-break: break-word; // Tự động xuống dòng từ dài/URL
+
+        p {
+          margin: 0;
+          line-height: 1.4;
+        }
+
+        .attachment {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.5rem;
+          border: 1px solid $color-outline-variant;
+          border-radius: 0.25rem;
+          background-color: $color-surface-low;
+          margin-top: 0.5rem;
+          cursor: pointer;
+
+          &:hover {
+            background-color: $color-surface-container;
+          }
+
+          .pdfIcon {
+            color: $color-error;
+            flex-shrink: 0;
+          }
+
+          .fileInfo {
+            min-width: 0;
+            flex: 1;
+
+            p {
+              font-size: 0.875rem;
+              font-weight: 500;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            }
+
+            span {
+              font-size: 12px;
+              color: $color-outline;
+            }
+          }
+        }
+      }
+
+      .msgTime {
+        font-size: 11px;
+        color: $color-outline;
+        margin-top: 0.25rem;
+        margin-left: 0.25rem;
+        display: block;
+      }
+
+      .msgMeta {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        margin-top: 0.25rem;
+
+        .checkIcon {
+          font-size: 14px;
+          color: $color-primary-container;
+        }
+      }
+    }
+  }
+
+  .chatInputArea {
+    padding: 1rem;
+    background-color: $color-surface;
+    border-top: 1px solid $color-outline-variant;
+
+    .inputBox {
+      display: flex;
+      align-items: flex-end;
+      gap: 0.5rem;
+      background-color: $color-bg;
+      border-radius: 0.75rem;
+      border: 1px solid $color-outline-variant;
+      padding: 0.5rem;
+
+      &:focus-within {
+        border-color: $color-primary-container;
+      }
+
+      button {
+        padding: 0.5rem;
+        color: $color-secondary;
+        border-radius: 9999px;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        flex-shrink: 0;
+
+        &:hover {
+          color: $color-primary-container;
+          background-color: $color-surface-container;
+        }
+
+        &.btnSend {
+          background-color: $color-primary-container;
+          color: $color-on-primary-container;
+
+          &:hover {
+            background-color: $color-primary;
+          }
+        }
+      }
+
+      textarea {
+        flex: 1;
+        min-width: 0;
+        background: transparent;
+        border: none;
+        outline: none;
+        resize: none;
+        font-size: 0.9375rem;
+        padding: 0.5rem 0;
+        max-height: 120px;
+        font-family: inherit;
+      }
+    }
+  }
+}
+
+// Cột 3: Thông tin ngữ cảnh/Dự án (Context Info Column)
+.contextColumn {
+  display: none;
+  width: 18.75rem; // 300px
+  max-width: 25%;
+  border-left: 1px solid $color-outline-variant;
+  flex-direction: column;
+  background-color: $color-surface;
+  flex-shrink: 0;
+  overflow-y: auto;
+
+  @media (min-width: 1200px) {
+    display: flex;
+  }
+
+  .companyHeader {
+    padding: 1.25rem;
+    border-bottom: 1px solid $color-outline-variant;
+    text-align: center;
+
+    .logoImg {
+      width: 4rem;
+      height: 4rem;
+      border-radius: 9999px;
+      object-fit: cover;
+      margin: 0 auto 0.75rem;
+    }
+
+    h3 {
+      font-size: 1.125rem;
+      font-weight: 700;
+    }
+
+    .location {
+      font-size: 0.875rem;
+      color: $color-on-surface-variant;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.25rem;
+      margin-top: 0.25rem;
+    }
+
+    .tags {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+
+      span {
+        padding: 0.25rem 0.5rem;
+        background-color: $color-surface-variant;
+        color: $color-on-surface-variant;
+        border-radius: 0.25rem;
+        font-size: 12px;
+        font-weight: 500;
+      }
+    }
+  }
+
+  .projectSection {
+    padding: 1.25rem;
+    border-bottom: 1px solid $color-outline-variant;
+
+    h4 {
+      font-size: 0.875rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+
+    .projectCard {
+      background-color: $color-surface-low;
+      padding: 0.875rem;
+      border-radius: 0.5rem;
+      border: 1px solid $color-outline-variant;
+      cursor: pointer;
+
+      h5 {
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: $color-primary;
+        margin-bottom: 0.25rem;
+      }
+
+      p {
+        font-size: 0.8125rem;
+        color: $color-on-surface-variant;
+        margin-bottom: 0.5rem;
+        line-height: 1.4;
+      }
+
+      .cardFooter {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 0.5rem;
+        border-top: 1px solid $color-outline-variant;
+
+        .price {
+          font-size: 13px;
+          font-weight: 600;
+        }
+
+        .status {
+          font-size: 12px;
+          background-color: $color-tertiary-container;
+          color: $color-on-tertiary-container;
+          padding: 0.125rem 0.5rem;
+          border-radius: 0.25rem;
+        }
+      }
+    }
+  }
+
+  .filesSection {
+    padding: 1.25rem;
+
+    h4 {
+      font-size: 0.875rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+
+    .fileList {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+
+      .fileItem {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.5rem;
+        border-radius: 0.25rem;
+        cursor: pointer;
+
+        &:hover {
+          background-color: $color-surface-container;
+        }
+
+        .iconBox {
+          width: 2rem;
+          height: 2rem;
+          border-radius: 0.25rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+
+          &.pdf {
+            background-color: $color-error-container;
+            color: $color-error;
+          }
+
+          &.img {
+            background-color: $color-surface-variant;
+            color: $color-on-surface-variant;
+          }
+        }
+
+        .fileMeta {
+          flex: 1;
+          min-width: 0;
+
+          p {
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+
+          span {
+            font-size: 11px;
+            color: $color-outline;
+          }
+        }
+      }
+    }
+  }
+}
