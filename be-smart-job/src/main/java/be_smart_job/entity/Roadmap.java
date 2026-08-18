@@ -1,10 +1,6 @@
 package be_smart_job.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
@@ -16,21 +12,28 @@ import org.springframework.data.mongodb.core.mapping.Field;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-@Document(collection = "notifications")
-public class Notification extends BaseEntity {
+@Document(collection = "roadmaps")
+public class Roadmap extends BaseEntity {
 
     @Id
     private String id;
 
     @Indexed
-    @Field("user_id")
-    private String userId;
+    @Field("match_id")
+    private String matchId;
 
-    private String title;
-    private String content;
-    private String type;
-    private String targetUrl;
+    @Indexed
+    @Field("freelancer_id")
+    private String freelancerId;
+
+    @Indexed
+    @Field("job_id")
+    private String jobId;
+
+    private Double currentScore;
+    private Double targetScore;
+    private Integer totalSteps;
 
     @Builder.Default
-    private Boolean isRead = false;
+    private Integer completedSteps = 0;
 }

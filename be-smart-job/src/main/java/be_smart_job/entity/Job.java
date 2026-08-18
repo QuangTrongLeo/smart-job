@@ -1,11 +1,10 @@
 package be_smart_job.entity;
 
+import be_smart_job.enums.CurrencyType; // Import Enum CurrencyType
+import be_smart_job.enums.EmploymentType;
+import be_smart_job.enums.ExperienceLevel;
 import be_smart_job.enums.JobStatus;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
@@ -30,21 +29,33 @@ public class Job extends BaseEntity {
     @Field("client_id")
     private String clientId;
 
+    @Indexed
+    @Field("category_id")
+    private String categoryId;
+
     private String title;
-    private String rawDescription;
+    private String description;
+
+    // Company Info
+    private String companyName;
+    private String companyAddress;
+
+    // Work Requirements
+    private ExperienceLevel experienceLevel;
+    private Integer requiredExperienceYears;
+    private EmploymentType employmentType;
 
     // AI Processed Data
-    private String structuredDescription;
-    private List<String> extractedSkills;
-    private Integer requiredExperienceMonths;
-    private List<Double> jobVector;
+    private String aiParsedDesc;
+    private List<String> requiredSkills;
+    private List<Double> vector;
 
     // Budget Info
-    private BigDecimal budgetMin;
-    private BigDecimal budgetMax;
+    private BigDecimal minBudget;
+    private BigDecimal maxBudget;
 
     @Builder.Default
-    private String currency = "USD";
+    private CurrencyType currency = CurrencyType.VND;
 
     @Builder.Default
     private JobStatus status = JobStatus.OPEN;

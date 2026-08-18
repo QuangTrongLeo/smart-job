@@ -1,23 +1,27 @@
 package be_smart_job.entity;
 
-import be_smart_job.enums.RoleType;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-@Document(collection = "roles")
-public class Role extends BaseEntity {
+@Document(collection = "categories")
+public class Category extends BaseEntity {
 
     @Id
     private String id;
 
     @Indexed(unique = true)
-    private RoleType name; // FREELANCER, CLIENT, ADMIN
+    private String name;
+
+    @Indexed
+    @Field("parent_id")
+    private String parentId;
 }

@@ -1,16 +1,12 @@
 package be_smart_job.entity;
 
 import be_smart_job.enums.UserStatus;
-import lombok.AllArgsConstructor;
-import lombok.Builder; // Thêm import này nếu chưa có
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
-import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -24,13 +20,20 @@ public class User extends BaseEntity {
     private String id;
 
     @Indexed(unique = true)
+    private String username;
+
+    @Indexed(unique = true)
     private String email;
+
     private String password;
+    private String firstName;
+    private String lastName;
     private String avatarUrl;
 
-    @Builder.Default
-    private UserStatus status = UserStatus.ACTIVE;
+    @Indexed
+    @Field("role_id")
+    private String roleId; // Liên kết đến Role Entity
 
-    @DBRef
-    private Role role;
+    @Builder.Default
+    private UserStatus status = UserStatus.UNVERIFIED;
 }

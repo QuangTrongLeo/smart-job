@@ -21,15 +21,23 @@ public class DataInitializer {
     @Bean
     public CommandLineRunner initRoles() {
         return args -> {
-            Arrays.stream(RoleType.values()).forEach(roleType -> {
-                if (!roleRepository.existsByName(roleType)) {
-                    Role role = Role.builder()
-                            .name(roleType)
-                            .build();
-                    roleRepository.save(role);
-                    log.info("Initialized role: {}", roleType);
+            try {
+                log.info("--- Starting Role Initialization ---");
+                for (RoleType roleType : RoleType.values()) {
+                    if (!roleRepository.existsByName(roleType)) {
+                        Role role = Role.builder()
+                                .name(roleType)
+                                .build();
+                        roleRepository.save(role);
+                        log.info(" Successfully initialized role: {}", roleType);
+                    } else {
+                        log.info(" Role already exists: {}", roleType);
+                    }
                 }
-            });
+                log.info("--- Role Initialization Completed ---");
+            } catch (Exception e) {
+                log.error("❌ Error occurred during Role Initialization: ", e);
+            }
         };
     }
 }

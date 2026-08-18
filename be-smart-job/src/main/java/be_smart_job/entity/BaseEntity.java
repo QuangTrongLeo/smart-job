@@ -12,7 +12,7 @@ import java.time.Instant;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@SuperBuilder // Dùng @SuperBuilder thay vì @Builder để hỗ trợ Lombok khi Kế thừa
+@SuperBuilder
 public abstract class BaseEntity {
 
     @CreatedDate

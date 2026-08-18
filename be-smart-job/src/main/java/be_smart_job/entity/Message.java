@@ -23,6 +23,10 @@ public class Message extends BaseEntity {
     private String id;
 
     @Indexed
+    @Field("conversation_id")
+    private String conversationId;
+
+    @Indexed
     @Field("job_id")
     private String jobId;
 
