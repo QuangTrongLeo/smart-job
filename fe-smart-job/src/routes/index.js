@@ -1,13 +1,18 @@
+
+import config from '../config';
 import { SidebarLayout } from '~/layouts';
 
 // Import tất cả các Pages từ src/pages/index.js
 import { 
   Home, 
+  Jobs,
+  Login
 } from '~/pages';
 
 const publishRoutes = [
-  { path: '/', component: Home }, // Home dùng DefaultLayout
-//   { path: '/jobs', component: Jobs }, // Jobs dùng DefaultLayout
+  { path: config.routes.home, component: Home },
+  { path: config.routes.jobs, component: Jobs },
+   { path: config.routes.login, component: Login },
 //   { path: '/jobs/:id', component: JobDetail }, // JobDetail dùng DefaultLayout
   
 //   // Login & Register chỉ muốn có Header/Footer (không Sidebar) -> Dùng SecondLayout
