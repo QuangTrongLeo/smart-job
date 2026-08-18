@@ -15,7 +15,8 @@ import {
     Freelancers,
     FreelancerDetail,
     Messages,
-    FavoriteJobs
+    FavoriteJobs,
+    FavoriteFreelancers
 } from '~/pages';
 
 const publishRoutes = [
@@ -30,13 +31,14 @@ const publishRoutes = [
     { path: config.routes.freelancers, component: Freelancers },
     { path: config.routes.freelancer, component: FreelancerDetail },
     { path: config.routes.messages, component: Messages },
-    { path: config.routes.favorite_jobs, component: FavoriteJobs }
+    { path: config.routes.favorite_jobs, component: FavoriteJobs },
+    { path: config.routes.favorite_freelancers, component: FavoriteFreelancers }
+];
 //   { path: '/jobs/:id', component: JobDetail }, // JobDetail dùng DefaultLayout
   
 //   // Login & Register chỉ muốn có Header/Footer (không Sidebar) -> Dùng SecondLayout
 //   { path: '/login', component: Login, layout: SecondLayout },
 //   { path: '/register', component: Register, layout: SecondLayout },
-];
 
 const freelancerRoutes = [
 //   { path: '/freelancer/dashboard', component: FreelancerDashboard },

@@ -1,0 +1,394 @@
+// Variables
+$primary: #004ac6;
+$primary-container: #2563eb;
+$primary-fixed: #dbe1ff;
+$primary-fixed-dim: #b4c5ff;
+$on-primary-container: #eeefff;
+$on-primary: #ffffff;
+$secondary: #505f76;
+$tertiary: #006242;
+$bg-surface: #f0f3ff;
+$bg-card: #ffffff;
+$surface-variant: #d8e3fb;
+$text-dark: #111c2d;
+$text-muted: #434655;
+$border-color: #c3c6d7;
+$error: #ba1a1a;
+$error-container: #ffdad6;
+$star-color: #fbbf24;
+
+.favoriteFreelancersPage {
+  background-color: $bg-surface;
+  min-height: 100vh;
+  padding: 16px;
+  font-family: 'Inter', sans-serif;
+  color: $text-dark;
+
+  @media (min-width: 1024px) {
+    padding: 32px;
+  }
+}
+
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+// Page Header
+.header {
+  margin-bottom: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  @media (min-width: 768px) {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .title {
+    font-size: 24px;
+    line-height: 32px;
+    font-weight: 700;
+    color: $text-dark;
+    margin: 0;
+
+    @media (min-width: 768px) {
+      font-size: 32px;
+      line-height: 40px;
+    }
+  }
+
+  .subtitle {
+    font-size: 16px;
+    line-height: 24px;
+    color: $secondary;
+    margin-top: 4px;
+    margin-bottom: 0;
+  }
+}
+
+// Search & Filter Bar
+.filterBar {
+  background-color: $bg-card;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  border: 1px solid $border-color;
+  margin-bottom: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  @media (min-width: 768px) {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .searchBox {
+    position: relative;
+    width: 100%;
+
+    @media (min-width: 768px) {
+      flex: 1;
+    }
+
+    .searchIcon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: $secondary;
+      font-size: 20px;
+      pointer-events: none;
+    }
+
+    .searchInput {
+      width: 100%;
+      padding: 8px 16px 8px 40px;
+      background-color: #f9f9ff;
+      border-radius: 8px;
+      border: 1px solid $border-color;
+      font-size: 16px;
+      color: $text-dark;
+      outline: none;
+      transition: all 0.2s ease;
+
+      &::placeholder {
+        color: $secondary;
+      }
+
+      &:focus {
+        border-color: $primary;
+        box-shadow: 0 0 0 2px $primary-fixed;
+      }
+    }
+  }
+
+  .filterCategories {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    @media (min-width: 768px) {
+      width: auto;
+      padding-bottom: 0;
+    }
+
+    .btnFilterActive {
+      white-space: nowrap;
+      padding: 8px 16px;
+      background-color: $primary-fixed;
+      color: $primary;
+      font-size: 14px;
+      font-weight: 500;
+      border-radius: 9999px;
+      border: 1px solid $primary-fixed-dim;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+
+      &:hover {
+        background-color: $primary-container;
+        color: $on-primary-container;
+      }
+    }
+
+    .btnFilter {
+      white-space: nowrap;
+      padding: 8px 16px;
+      background-color: #f9f9ff;
+      color: $secondary;
+      font-size: 14px;
+      font-weight: 500;
+      border-radius: 9999px;
+      border: 1px solid $border-color;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: background-color 0.2s ease;
+
+      &:hover {
+        background-color: $surface-variant;
+      }
+
+      .tuneIcon {
+        font-size: 18px;
+      }
+    }
+  }
+}
+
+// Freelancer Grid List
+.gridList {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (min-width: 1280px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+// Freelancer Card
+.card {
+  background-color: $bg-card;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  border: 1px solid $border-color;
+  position: relative;
+  transition: all 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border-color: $primary-fixed-dim;
+  }
+
+  .btnFavorite {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    color: $error;
+    background-color: $error-container;
+    border-radius: 9999px;
+    padding: 8px;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+
+    &:hover {
+      background-color: $error;
+      color: #ffffff;
+    }
+
+    span {
+      font-variation-settings: 'FILL' 1;
+    }
+  }
+
+  .cardHeader {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 16px;
+
+    .avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 9999px;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    .freelancerInfo {
+      .name {
+        font-size: 20px;
+        line-height: 28px;
+        font-weight: 600;
+        color: $text-dark;
+        margin: 0;
+      }
+
+      .role {
+        font-size: 14px;
+        color: $primary;
+        font-weight: 500;
+        margin: 2px 0 0 0;
+      }
+
+      .ratingBox {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 4px;
+        color: $secondary;
+        font-size: 14px;
+
+        .starIcon {
+          font-size: 18px;
+          color: $star-color;
+          font-variation-settings: 'FILL' 1;
+        }
+
+        .ratingScore {
+          font-weight: 500;
+          color: $text-dark;
+        }
+      }
+    }
+  }
+
+  .skillsGroup {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 16px;
+
+    .skillTag {
+      padding: 4px 8px;
+      background-color: $surface-variant;
+      color: $text-muted;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 6px;
+    }
+  }
+
+  .statsRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid $border-color;
+    padding-top: 16px;
+    margin-bottom: 16px;
+
+    .rateBox {
+      .rateValue {
+        font-size: 20px;
+        line-height: 28px;
+        font-weight: 600;
+        color: $text-dark;
+      }
+
+      .rateUnit {
+        font-size: 14px;
+        color: $secondary;
+      }
+    }
+
+    .successRateBox {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+
+      .successLabel {
+        font-size: 14px;
+        color: $secondary;
+      }
+
+      .successValue {
+        font-size: 14px;
+        font-weight: 500;
+        color: $tertiary;
+      }
+    }
+  }
+
+  .actionGroup {
+    display: flex;
+    gap: 16px;
+
+    .btnContact {
+      flex: 1;
+      padding: 8px 0;
+      background-color: #f9f9ff;
+      border: 1px solid $border-color;
+      color: $text-dark;
+      font-size: 14px;
+      font-weight: 500;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+
+      &:hover {
+        background-color: $surface-variant;
+      }
+    }
+
+    .btnInvite {
+      flex: 1;
+      padding: 8px 0;
+      background-color: $primary-container;
+      color: $on-primary-container;
+      border: none;
+      font-size: 14px;
+      font-weight: 500;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.2s ease, color 0.2s ease;
+
+      &:hover {
+        background-color: #0053db;
+        color: $on-primary;
+      }
+    }
+  }
+}
