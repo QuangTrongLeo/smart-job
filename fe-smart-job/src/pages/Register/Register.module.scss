@@ -1,0 +1,411 @@
+// CSS Variables & Theme Definition
+$primary: #004ac6;
+$primary-container: #2563eb;
+$on-primary: #ffffff;
+$surface-container-lowest: #ffffff;
+$surface-container-low: #f2f3ff;
+$surface-container: #eaedff;
+$background: #faf8ff;
+$on-surface: #131b2e;
+$on-surface-variant: #434655;
+$outline: #737686;
+$outline-variant: #c3c6d7;
+$error: #ba1a1a;
+
+.registerPage {
+  background-color: $background;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  font-family: 'Inter', sans-serif;
+  color: $on-surface;
+
+  @media (min-width: 768px) {
+    padding: 40px;
+  }
+}
+
+.mainCard {
+  width: 100%;
+  max-width: 1000px;
+  background-color: $surface-container-lowest;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  border: 1px solid $outline-variant;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  @media (min-width: 768px) {
+    flex-direction: row;
+  }
+}
+
+/* Left Side: Visual / Branding */
+.visualSide {
+  display: none;
+  width: 50%;
+  background-color: $surface-container-low;
+  padding: 32px;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  border-right: 1px solid $outline-variant;
+
+  @media (min-width: 768px) {
+    display: flex;
+  }
+
+  .brandTitle {
+    font-size: 32px;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    color: $primary;
+    margin-bottom: 8px;
+  }
+
+  .brandSubtitle {
+    font-size: 18px;
+    color: $on-surface-variant;
+  }
+
+  .testimonials {
+    z-index: 10;
+    margin-top: 32px;
+
+    .testimonialCard {
+      background-color: $surface-container-lowest;
+      padding: 16px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      border: 1px solid $outline-variant;
+      margin-bottom: 16px;
+      max-width: 80%;
+
+      &:first-child {
+        transform: rotate(-2deg);
+      }
+
+      &:last-child {
+        margin-left: auto;
+        transform: rotate(1deg);
+        margin-bottom: 0;
+      }
+
+      .stars {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 4px;
+        color: $primary;
+      }
+
+      .comment {
+        font-size: 14px;
+        color: $on-surface;
+      }
+
+      .author {
+        font-size: 12px;
+        font-weight: 600;
+        color: $on-surface-variant;
+        margin-top: 8px;
+      }
+    }
+  }
+
+  .bgPattern {
+    position: absolute;
+    inset: 0;
+    opacity: 0.1;
+    pointer-events: none;
+    background-image: radial-gradient($primary 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+}
+
+/* Right Side: Registration Form */
+.formSide {
+  width: 100%;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  @media (min-width: 768px) {
+    width: 50%;
+    padding: 32px;
+  }
+
+  .mobileHeader {
+    display: block;
+    margin-bottom: 24px;
+    text-align: center;
+
+    @media (min-width: 768px) {
+      display: none;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 900;
+      color: $primary;
+    }
+  }
+
+  .formTitle {
+    font-size: 24px;
+    font-weight: 600;
+    color: $on-surface;
+    margin-bottom: 4px;
+    text-align: center;
+
+    @media (min-width: 768px) {
+      text-align: left;
+    }
+  }
+
+  .formSubtitle {
+    font-size: 16px;
+    color: $on-surface-variant;
+    margin-bottom: 16px;
+    text-align: center;
+
+    @media (min-width: 768px) {
+      text-align: left;
+    }
+  }
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rowGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+
+  @media (min-width: 640px) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 500;
+  color: $on-surface;
+
+  .required {
+    color: $error;
+  }
+}
+
+.input {
+  width: 100%;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid $outline;
+  background-color: $surface-container-lowest;
+  color: $on-surface;
+  font-size: 16px;
+  transition: all 0.2s ease;
+
+  &:focus {
+    outline: none;
+    border-color: $primary;
+    box-shadow: 0 0 0 3px rgba(0, 74, 198, 0.1);
+  }
+}
+
+/* Role Selector */
+.roleGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+
+  @media (min-width: 640px) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.roleCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  border-radius: 8px;
+  border: 2px solid $outline-variant;
+  background-color: $surface-container-lowest;
+  cursor: pointer;
+  position: relative;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+
+  &:hover {
+    border-color: rgba($primary, 0.5);
+  }
+
+  &.active {
+    border-color: $primary;
+    background-color: $surface-container;
+
+    .iconContainer {
+      color: $primary;
+    }
+  }
+
+  .iconContainer {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: $surface-container;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: $on-surface-variant;
+    margin-bottom: 4px;
+    transition: color 0.2s ease;
+  }
+
+  .roleTitle {
+    font-size: 14px;
+    font-weight: 600;
+    color: $on-surface;
+  }
+
+  .roleDesc {
+    font-size: 14px;
+    color: $on-surface-variant;
+    margin-top: 4px;
+  }
+
+  .checkIcon {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    color: $primary;
+  }
+}
+
+.errorText {
+  color: $error;
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+.termsGroup {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 4px;
+
+  input[type="checkbox"] {
+    margin-top: 2px;
+    width: 16px;
+    height: 16px;
+    accent-color: $primary;
+    cursor: pointer;
+  }
+
+  label {
+    font-size: 14px;
+    color: $on-surface-variant;
+
+    a {
+      color: $primary;
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+}
+
+.submitBtn {
+  width: 100%;
+  padding: 12px;
+  margin-top: 8px;
+  background-color: $primary-container;
+  color: $on-primary;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+
+  &:hover {
+    background-color: rgba($primary-container, 0.9);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.footerText {
+  margin-top: 16px;
+  text-align: center;
+  font-size: 14px;
+  color: $on-surface-variant;
+
+  a {
+    color: $primary;
+    font-weight: 600;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+/* Đoạn tùy chỉnh nhỏ trong Register.module.scss */
+
+.stars {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 4px;
+  color: #ffc107; // Màu vàng cho ngôi sao đánh giá (Bootstrap warning/yellow)
+  font-size: 14px;
+}
+
+.roleCard {
+  .iconContainer {
+    font-size: 20px; // Kích thước icon trong ô chọn Role
+  }
+
+  .checkIcon {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    color: $primary;
+    font-size: 18px;
+  }
+}
+
+.submitBtn {
+  i {
+    font-size: 18px;
+    transition: transform 0.2s ease;
+  }
+
+  &:hover i {
+    transform: translateX(4px); // TẠO HIỆU ỨNG MŨI TÊN DỊCH CHUYỂN KHI HOVER
+  }
+}
