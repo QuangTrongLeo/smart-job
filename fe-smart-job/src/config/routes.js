@@ -5,6 +5,7 @@ const routes = {
   login: '/login',
   register: '/register',
   profile: '/profile',
+  forgot_password: '/forgot-password',
   freelancers: '/freelancers',
   explore: '/explore',
   about: '/about',

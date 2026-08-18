@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import styles from './Login.module.scss';
+import config from '~/config';
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -45,7 +46,9 @@ function Login() {
           <div>
             <div className="d-flex justify-content-between align-items-center mb-1">
               <label className="form-label small fw-semibold m-0" htmlFor="password">Mật khẩu</label>
-              <a className="small text-primary text-decoration-none" href="#forgot">Quên mật khẩu?</a>
+              <a className="small text-primary text-decoration-none" href={config.routes.forgot_password}>
+                Quên mật khẩu?
+              </a>
             </div>
             <input 
               type="password" 
