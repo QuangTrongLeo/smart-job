@@ -241,6 +241,7 @@ $outline: #737686;
           border: none;
           color: $outline;
           cursor: pointer;
+          font-size: 18px;
 
           &:hover {
             color: $primary-container;
@@ -258,7 +259,6 @@ $outline: #737686;
 
         .starIcon {
           color: #f59e0b;
-          font-size: 18px;
         }
       }
     }

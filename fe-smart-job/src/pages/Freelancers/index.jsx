@@ -71,7 +71,7 @@ export function Freelancers() {
                 <label><input type="checkbox" /> Viết lách &amp; Dịch thuật</label>
               </div>
               <button className={styles.btnMore}>
-                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>add</span> Xem thêm
+                <i className="bi bi-plus-lg"></i> Xem thêm
               </button>
             </div>
 
@@ -101,7 +101,7 @@ export function Freelancers() {
                 <label>
                   <input type="checkbox" defaultChecked />
                   4 sao trở lên
-                  <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#F59E0B', marginLeft: '4px' }}>star</span>
+                  <i className="bi bi-star-fill" style={{ color: '#F59E0B', marginLeft: '4px' }}></i>
                 </label>
               </div>
             </div>
@@ -134,11 +134,11 @@ export function Freelancers() {
                         <p className={styles.role}>{freelancer.role}</p>
                       </div>
                       <button className={styles.favBtn} aria-label="Lưu freelancer">
-                        <span className="material-symbols-outlined">favorite</span>
+                        <i className="bi bi-heart"></i>
                       </button>
                     </div>
                     <div className={styles.ratingRow}>
-                      <span className={`material-symbols-outlined ${styles.starIcon}`}>star</span>
+                      <i className={`bi bi-star-fill ${styles.starIcon}`}></i>
                       <span>{freelancer.rating}</span>
                       <span>•</span>
                       <span>{freelancer.location}</span>
@@ -181,16 +181,16 @@ export function Freelancers() {
 
           {/* Pagination */}
           <div className={styles.pagination}>
-            <button disabled>
-              <span className="material-symbols-outlined">chevron_left</span>
+            <button disabled aria-label="Trang trước">
+              <i className="bi bi-chevron-left"></i>
             </button>
             <button className={styles.active}>1</button>
             <button>2</button>
             <button>3</button>
             <span>...</span>
             <button>12</button>
-            <button>
-              <span className="material-symbols-outlined">chevron_right</span>
+            <button aria-label="Trang sau">
+              <i className="bi bi-chevron-right"></i>
             </button>
           </div>
         </section>

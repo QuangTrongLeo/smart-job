@@ -1,7 +1,7 @@
 const routes = {
   home: '/',
   jobs: '/jobs',
-  jobDetail: '/jobs',
+  job: '/job',
   login: '/login',
   register: '/register',
   profile: '/profile',
@@ -11,6 +11,7 @@ const routes = {
   about: '/about',
   verify: '/verify',
   freelancers: '/freelancers',
+  freelancer: '/freelancer',
 };
 
 export default routes;
