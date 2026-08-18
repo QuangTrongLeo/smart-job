@@ -14,7 +14,8 @@ import {
     ForgotPassword,
     Freelancers,
     FreelancerDetail,
-    Messages
+    Messages,
+    FavoriteJobs
 } from '~/pages';
 
 const publishRoutes = [
@@ -28,7 +29,8 @@ const publishRoutes = [
     { path: config.routes.forgot_password, component: ForgotPassword },
     { path: config.routes.freelancers, component: Freelancers },
     { path: config.routes.freelancer, component: FreelancerDetail },
-    { path: config.routes.messages, component: Messages }
+    { path: config.routes.messages, component: Messages },
+    { path: config.routes.favorite_jobs, component: FavoriteJobs }
 //   { path: '/jobs/:id', component: JobDetail }, // JobDetail dùng DefaultLayout
   
 //   // Login & Register chỉ muốn có Header/Footer (không Sidebar) -> Dùng SecondLayout

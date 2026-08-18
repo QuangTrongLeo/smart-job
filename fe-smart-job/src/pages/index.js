@@ -9,3 +9,4 @@ export { default as Verify } from './Verify';
 export { default as Freelancers } from './Freelancers';
 export { default as FreelancerDetail } from './FreelancerDetail';
 export { default as Messages } from './Messages';
+export { default as FavoriteJobs } from './FavoriteJobs';

@@ -13,6 +13,8 @@ const routes = {
   freelancers: '/freelancers',
   freelancer: '/freelancer',
   messages: '/messages',
+  favorite_jobs: '/favorite-jobs',
+  favorite_freelancers: '/favorite-freelancers',
 };
 
 export default routes;
