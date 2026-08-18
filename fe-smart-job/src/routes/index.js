@@ -8,6 +8,7 @@ import {
   Jobs,
   Login,
     Profile,
+    Verify
 } from '~/pages';
 
 const publishRoutes = [
@@ -15,6 +16,7 @@ const publishRoutes = [
   { path: config.routes.jobs, component: Jobs },
     { path: config.routes.login, component: Login },
     { path: config.routes.profile, component: Profile },
+    { path: config.routes.verify, component: Verify },
 //   { path: '/jobs/:id', component: JobDetail }, // JobDetail dùng DefaultLayout
   
 //   // Login & Register chỉ muốn có Header/Footer (không Sidebar) -> Dùng SecondLayout

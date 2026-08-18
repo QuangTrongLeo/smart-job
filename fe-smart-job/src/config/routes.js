@@ -8,6 +8,7 @@ const routes = {
   freelancers: '/freelancers',
   explore: '/explore',
   about: '/about',
+  verify: '/verify',
 };
 
 export default routes;

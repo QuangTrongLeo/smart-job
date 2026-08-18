@@ -1,0 +1,272 @@
+// Hệ thống biến màu
+$primary: #004ac6;
+$primary-container: #2563eb;
+$on-primary: #ffffff;
+$on-surface: #131b2e;
+$on-surface-variant: #434655;
+$secondary: #5c5f61;
+$outline-variant: #c3c6d7;
+$surface-container: #eaedff;
+$surface-container-lowest: #ffffff;
+$surface: #faf8ff;
+
+.container {
+  min-height: 100vh;
+  background-color: $surface;
+  background-image: radial-gradient(#e2e7ff 1px, transparent 1px);
+  background-size: 20px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  color: $on-surface;
+  font-family: 'Inter', sans-serif;
+  box-sizing: border-box;
+
+  @media (min-width: 768px) {
+    padding: 40px;
+  }
+}
+
+.mainContent {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.brand {
+  margin-bottom: 32px;
+  text-align: center;
+
+  .logo {
+    font-size: 24px;
+    font-weight: 900;
+    letter-spacing: -0.025em;
+    color: $primary;
+    text-decoration: none;
+  }
+}
+
+.verifyCard {
+  width: 100%;
+  background-color: $surface-container-lowest;
+  border: 1px solid $outline-variant;
+  border-radius: 12px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.15s ease;
+  box-sizing: border-box;
+
+  @media (min-width: 768px) {
+    padding: 32px;
+  }
+
+  .topBar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background-color: $primary;
+  }
+
+  .iconBadge {
+    width: 64px;
+    height: 64px;
+    background-color: $surface-container;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    margin-bottom: 24px;
+    color: $primary;
+
+    .icon {
+      font-size: 28px;
+    }
+  }
+
+  .title {
+    font-size: 24px;
+    font-weight: 600;
+    color: $on-surface;
+    margin: 0 0 8px 0;
+    line-height: 1.4;
+  }
+
+  .subtitle {
+    font-size: 16px;
+    line-height: 1.5;
+    color: $on-surface-variant;
+    margin: 0 0 32px 0;
+    max-width: 320px;
+  }
+}
+
+.otpForm {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.otpContainer {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 32px;
+  width: 100%;
+
+  @media (min-width: 768px) {
+    gap: 16px;
+  }
+
+  .otpInput {
+    width: 48px;
+    height: 56px;
+    text-align: center;
+    font-size: 24px;
+    font-weight: 600;
+    color: $on-surface;
+    background-color: $surface;
+    border: 1px solid $outline-variant;
+    border-radius: 8px;
+    outline: none;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+
+    @media (min-width: 768px) {
+      width: 56px;
+      height: 64px;
+    }
+
+    &::-webkit-inner-spin-button,
+    &::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    -moz-appearance: textfield;
+
+    &:focus {
+      border-color: $primary;
+      box-shadow: 0 0 0 2px rgba(0, 74, 198, 0.2);
+    }
+  }
+}
+
+.submitBtn {
+  width: 100%;
+  background-color: $primary;
+  color: $on-primary;
+  padding: 16px;
+  border-radius: 8px;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+
+  &:hover:not(:disabled) {
+    background-color: $primary-container;
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  &:disabled {
+    opacity: 0.8;
+    cursor: not-allowed;
+  }
+
+  &.success {
+    background-color: #10b981;
+
+    &:hover {
+      background-color: #059669;
+    }
+  }
+
+  .btnIcon {
+    font-size: 16px;
+    display: inline-block;
+  }
+
+  .spin {
+    animation: spin 1s linear infinite;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.resendSection {
+  margin-top: 24px;
+  font-size: 14px;
+  color: $on-surface-variant;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+
+  .resendBtn {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 14px;
+    font-weight: 500;
+    color: $primary;
+    cursor: pointer;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: $primary-container;
+      text-decoration: underline;
+    }
+
+    &:focus {
+      outline: none;
+    }
+  }
+}
+
+.timerText {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: $secondary;
+}
+
+.securityFooter {
+  margin-top: 32px;
+  text-align: center;
+  font-size: 14px;
+  color: $on-surface-variant;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  .lockIcon {
+    font-size: 14px;
+  }
+}
