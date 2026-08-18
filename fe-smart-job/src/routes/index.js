@@ -6,13 +6,15 @@ import { SidebarLayout } from '~/layouts';
 import { 
   Home, 
   Jobs,
-  Login
+  Login,
+    Profile,
 } from '~/pages';
 
 const publishRoutes = [
   { path: config.routes.home, component: Home },
   { path: config.routes.jobs, component: Jobs },
-   { path: config.routes.login, component: Login },
+    { path: config.routes.login, component: Login },
+    { path: config.routes.profile, component: Profile },
 //   { path: '/jobs/:id', component: JobDetail }, // JobDetail dùng DefaultLayout
   
 //   // Login & Register chỉ muốn có Header/Footer (không Sidebar) -> Dùng SecondLayout
