@@ -10,6 +10,7 @@ const routes = {
   explore: '/explore',
   about: '/about',
   verify: '/verify',
+  freelancers: '/freelancers',
 };
 
 export default routes;

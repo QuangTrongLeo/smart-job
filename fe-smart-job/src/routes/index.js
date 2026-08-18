@@ -10,7 +10,8 @@ import {
     Register,
     Profile,
     Verify,
-    ForgotPassword
+    ForgotPassword,
+    Freelancers,
 } from '~/pages';
 
 const publishRoutes = [
@@ -21,6 +22,7 @@ const publishRoutes = [
     { path: config.routes.profile, component: Profile },
     { path: config.routes.verify, component: Verify },
     { path: config.routes.forgot_password, component: ForgotPassword },
+    { path: config.routes.freelancers, component: Freelancers },
 //   { path: '/jobs/:id', component: JobDetail }, // JobDetail dùng DefaultLayout
   
 //   // Login & Register chỉ muốn có Header/Footer (không Sidebar) -> Dùng SecondLayout

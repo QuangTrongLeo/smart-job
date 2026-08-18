@@ -1,0 +1,414 @@
+// CSS Variables & Theme setup
+$primary: #004ac6;
+$primary-container: #2563eb;
+$on-primary: #ffffff;
+$background: #f9f9ff;
+$surface-container-lowest: #ffffff;
+$surface-container-low: #f0f3ff;
+$surface-container-high: #dee8ff;
+$on-surface: #111c2d;
+$on-surface-variant: #434655;
+$outline-variant: #c3c6d7;
+$outline: #737686;
+
+.freelancersContainer {
+  background-color: $background;
+  color: $on-surface;
+  font-family: 'Inter', sans-serif;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 32px 16px;
+
+  @media (min-width: 768px) {
+    padding: 32px 24px;
+  }
+}
+
+.headerSection {
+  margin-bottom: 32px;
+
+  h1 {
+    font-size: 36px;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+  }
+
+  p {
+    font-size: 18px;
+    color: $on-surface-variant;
+    max-width: 672px;
+    margin: 0;
+  }
+}
+
+.contentGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+
+  @media (min-width: 1024px) {
+    flex-direction: row;
+  }
+}
+
+// Sidebar Filter
+.sidebar {
+  width: 100%;
+
+  @media (min-width: 1024px) {
+    width: 25%;
+    flex-shrink: 0;
+  }
+
+  .filterCard {
+    background-color: $surface-container-lowest;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 24px;
+
+    .filterHeader {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid $outline-variant;
+
+      h2 {
+        font-size: 20px;
+        font-weight: 600;
+        margin: 0;
+      }
+
+      button {
+        background: none;
+        border: none;
+        color: $primary;
+        font-size: 12px;
+        cursor: pointer;
+
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+    }
+
+    .filterGroup {
+      margin-bottom: 24px;
+
+      h3 {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 0 0 8px 0;
+      }
+
+      .optionsList {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+
+        label {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          cursor: pointer;
+          font-size: 14px;
+          color: $on-surface-variant;
+
+          input {
+            accent-color: $primary-container;
+          }
+        }
+      }
+
+      .btnMore {
+        background: none;
+        border: none;
+        color: $primary;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 8px;
+        cursor: pointer;
+
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+    }
+  }
+}
+
+// Main Results Area
+.resultsSection {
+  width: 100%;
+
+  @media (min-width: 1024px) {
+    width: 75%;
+  }
+
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    background-color: $surface-container-lowest;
+    padding: 8px 16px;
+    border-radius: 8px;
+    box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.1);
+    font-size: 14px;
+    color: $on-surface-variant;
+
+    .sortControls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      select {
+        border: 1px solid $outline-variant;
+        border-radius: 6px;
+        padding: 4px 8px;
+        font-size: 14px;
+        color: $on-surface;
+      }
+    }
+  }
+
+  .bentoGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+  }
+}
+
+// Freelancer Card
+.freelancerCard {
+  background-color: $surface-container-lowest;
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid transparent;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0px 10px 15px -3px rgba(0, 0, 0, 0.1);
+    border-color: $primary-container;
+  }
+
+  .cardHeader {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+
+    .avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid $surface-container-high;
+    }
+
+    .info {
+      flex-grow: 1;
+
+      .titleRow {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+
+        h3 {
+          margin: 0;
+          font-size: 20px;
+          font-weight: 700;
+        }
+
+        .role {
+          margin: 2px 0 0 0;
+          font-size: 14px;
+          color: $primary-container;
+          font-weight: 500;
+        }
+
+        .favBtn {
+          background: none;
+          border: none;
+          color: $outline;
+          cursor: pointer;
+
+          &:hover {
+            color: $primary-container;
+          }
+        }
+      }
+
+      .ratingRow {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 4px;
+        font-size: 14px;
+        color: $on-surface-variant;
+
+        .starIcon {
+          color: #f59e0b;
+          font-size: 18px;
+        }
+      }
+    }
+  }
+
+  .bio {
+    font-size: 14px;
+    color: $on-surface-variant;
+    margin-bottom: 16px;
+    flex-grow: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .skills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 24px;
+
+    .skillTag {
+      padding: 4px 8px;
+      background-color: $surface-container-low;
+      color: $on-surface-variant;
+      font-size: 12px;
+      border-radius: 6px;
+      border: 1px solid $outline-variant;
+    }
+  }
+
+  .metrics {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 16px;
+    border-top: 1px solid $outline-variant;
+    margin-bottom: 16px;
+
+    .price {
+      display: flex;
+      flex-direction: column;
+
+      span:first-child {
+        font-size: 12px;
+        color: $outline;
+      }
+
+      span:last-child {
+        font-size: 20px;
+        font-weight: 600;
+      }
+    }
+
+    .stats {
+      display: flex;
+      gap: 16px;
+      text-align: center;
+
+      div {
+        display: flex;
+        flex-direction: column;
+
+        span:first-child {
+          font-size: 12px;
+          color: $outline;
+        }
+
+        span:last-child {
+          font-size: 14px;
+          font-weight: 600;
+
+          &.successRate {
+            color: #10b981;
+          }
+        }
+      }
+    }
+  }
+
+  .cardActions {
+    display: flex;
+    gap: 8px;
+    margin-top: auto;
+
+    button {
+      flex: 1;
+      padding: 8px 0;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: background-color 0.2s;
+    }
+
+    .btnContact {
+      background-color: $primary-container;
+      color: $on-primary;
+
+      &:hover {
+        background-color: $primary;
+      }
+    }
+
+    .btnProfile {
+      background: transparent;
+      border: 1px solid $outline-variant;
+      color: $on-surface;
+
+      &:hover {
+        background-color: $surface-container-low;
+      }
+    }
+  }
+}
+
+// Pagination
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 32px;
+
+  button {
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    border: 1px solid $outline-variant;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:hover:not(:disabled) {
+      background-color: $surface-container-low;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    &.active {
+      background-color: $primary-container;
+      color: $on-primary;
+      border-color: $primary-container;
+    }
+  }
+}

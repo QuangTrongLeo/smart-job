@@ -5,3 +5,4 @@ export { default as Register } from './Register';
 export { default as ForgotPassword } from './ForgotPassword';
 export { default as Profile } from './Profile';
 export { default as Verify } from './Verify';
+export { default as Freelancers } from './Freelancers';
