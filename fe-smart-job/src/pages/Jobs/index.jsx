@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   jobService,
   categoryService,
@@ -7,48 +8,89 @@ import {
 } from '../../services';
 import styles from './Jobs.module.scss';
 
+// Avatar mặc định khi Client chưa thiết lập avatarUrl
+const DEFAULT_AVATAR =
+  'https://ui-avatars.com/api/?background=2563eb&color=fff&name=User';
+
+// Mock Fallback tuân thủ DTO JobResponse mới
 const MOCK_JOBS_FALLBACK = [
   {
-    id: '1',
+    id: '1345',
     title: 'Senior Frontend Developer (React, TypeScript)',
-    company: 'TechNova Solutions',
-    location: 'Hà Nội',
-    type: 'Toàn thời gian',
-    experience: '3-5 năm',
-    salary: '$1500 - $2500',
     description:
       'Chúng tôi đang tìm kiếm một Senior Frontend Developer có kinh nghiệm sâu rộng với React và TypeScript...',
-    logo: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCNyjBugPY_mJcbjx8Iu7MjwoeRz9J1-qk-FZSJmJ61t3W73mUygue0SxBQ2CO1I74ma2WK-mTlPB8lqeme9YNS42yclUdj01Vz9Kgn_xR7XQLTC78hM-axjf19nSNQxVWtFtEEzelrCKYTW2OYOSGtr17rOYKv4OjILK5JUB0i5IGVxUlNcK8VsTqBnHGFiaiD5YoVO0-2wySotqXRGBo4HNBQ7dCpA3OS4rArJSMnY0TsrzPt-KXu',
+    companyName: 'TechNova Solutions',
+    companyAddress: 'Hà Nội',
+    experienceLevel: 'SENIOR',
+    requiredExperienceYears: 3,
+    employmentType: 'FULL_TIME',
+    requiredSkills: ['React', 'TypeScript', 'SCSS'],
+    minBudget: 1500,
+    maxBudget: 2500,
+    currency: 'USD',
+    status: 'OPEN',
+    createdAt: '2026-02-15T10:00:00Z',
+    categories: [{ id: 'cat-1', name: 'IT / Phần mềm' }],
+    client: {
+      id: 'user-1',
+      username: 'technova_hr',
+      email: 'hr@technova.com',
+      firstName: 'TechNova',
+      lastName: 'HR',
+      avatarUrl: '',
+    },
   },
   {
     id: '2',
     title: 'UI/UX Designer (Figma, Design System)',
-    company: 'Creative Minds Agency',
-    location: 'TP. Hồ Chí Minh',
-    type: 'Freelance',
-    experience: 'Từ xa',
-    salary: 'Thỏa thuận',
     description:
       'Dự án thiết kế lại toàn bộ hệ thống ứng dụng di động cho một startup FinTech...',
-    logo: 'https://lh3.googleusercontent.com/aida-public/AB6AXuByangvM_DgNLXORUb9JZg2ReJH_DR9cIHaOJaFUwBcaOZDx3efsh4rj9gvmuK-6qwZwyy88HcuVdAYtCpJcuW93cEtdQ58tn-dkVGTq_e3NzGNTozHmGoA6ECORRpehsunzj1VggoRWzCOgCDVJ6UF8cW3sVaD5fZKDJYYZW1ccULFfncSoX2SBGZP9pz8-SE7OTfRaU6W92rWwPpzD1ckTVqc1Mh7sVM1tjZZbZnUa-O2cbtn8gEs',
+    companyName: 'Creative Minds Agency',
+    companyAddress: 'TP. Hồ Chí Minh',
+    experienceLevel: 'MID_LEVEL',
+    requiredExperienceYears: 2,
+    employmentType: 'FREELANCE',
+    requiredSkills: ['Figma', 'UI/UX', 'Design System'],
+    minBudget: 1000,
+    maxBudget: 1800,
+    currency: 'USD',
+    status: 'OPEN',
+    createdAt: '2026-02-18T08:30:00Z',
+    categories: [{ id: 'cat-2', name: 'Thiết kế / Đồ họa' }],
+    client: {
+      id: 'user-2',
+      username: 'creative_minds',
+      email: 'contact@creativeminds.com',
+      firstName: 'Creative',
+      lastName: 'Agency',
+      avatarUrl: 'https://i.pravatar.cc/150?img=33',
+    },
   },
 ];
 
+const ITEMS_PER_PAGE = 5;
+
 function Jobs() {
+  const navigate = useNavigate();
+
   const [jobs, setJobs] = useState([]);
   const [categories, setCategories] = useState([]);
   const [experienceLevels, setExperienceLevels] = useState([]);
   const [employmentTypes, setEmploymentTypes] = useState([]);
 
+  // State bộ lọc
   const [searchTerm, setSearchTerm] = useState('');
   const [location, setLocation] = useState('Tất cả địa điểm');
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [selectedExperiences, setSelectedExperiences] = useState([]);
   const [selectedType, setSelectedType] = useState('');
+  const [sortBy, setSortBy] = useState('Phù hợp nhất');
+
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // Load danh sách filter & công việc từ Backend
+  // Fetch dữ liệu từ API Backend
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -100,7 +142,102 @@ function Jobs() {
     fetchData();
   }, []);
 
-  // Bật/tắt trạng thái yêu thích công việc
+  // Xử lý Lọc & Sắp xếp dữ liệu FE
+  const filteredJobs = useMemo(() => {
+    return jobs
+      .filter((job) => {
+        // 1. Tìm kiếm từ khóa
+        if (searchTerm.trim() !== '') {
+          const query = searchTerm.toLowerCase();
+          const matchTitle = job.title?.toLowerCase().includes(query);
+          const matchDesc = job.description?.toLowerCase().includes(query);
+          const matchCompany = job.companyName?.toLowerCase().includes(query);
+          const matchSkills = job.requiredSkills?.some((skill) =>
+            skill.toLowerCase().includes(query)
+          );
+          if (!matchTitle && !matchDesc && !matchCompany && !matchSkills) {
+            return false;
+          }
+        }
+
+        // 2. Lọc Địa điểm
+        if (location !== 'Tất cả địa điểm') {
+          const address = job.companyAddress || '';
+          if (!address.toLowerCase().includes(location.toLowerCase())) {
+            return false;
+          }
+        }
+
+        // 3. Lọc Danh mục
+        if (selectedCategories.length > 0) {
+          const hasCategory = job.categories?.some((cat) =>
+            selectedCategories.includes(cat.id)
+          );
+          if (!hasCategory) return false;
+        }
+
+        // 4. Lọc Trình độ / Kinh nghiệm
+        if (selectedExperiences.length > 0) {
+          if (!selectedExperiences.includes(job.experienceLevel)) {
+            return false;
+          }
+        }
+
+        // 5. Lọc Hình thức
+        if (selectedType !== '') {
+          if (job.employmentType !== selectedType) {
+            return false;
+          }
+        }
+
+        return true;
+      })
+      .sort((a, b) => {
+        if (sortBy === 'Mới nhất') {
+          return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+        }
+        if (sortBy === 'Lương cao nhất') {
+          return (b.maxBudget || 0) - (a.maxBudget || 0);
+        }
+        return 0;
+      });
+  }, [
+    jobs,
+    searchTerm,
+    location,
+    selectedCategories,
+    selectedExperiences,
+    selectedType,
+    sortBy,
+  ]);
+
+  // Reset về trang 1 khi thay đổi bộ lọc
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, location, selectedCategories, selectedExperiences, selectedType, sortBy]);
+
+  // Tính toán Phân trang
+  const totalPages = Math.ceil(filteredJobs.length / ITEMS_PER_PAGE) || 1;
+  const paginatedJobs = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredJobs.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredJobs, currentPage]);
+
+  // Format mức lương
+  const formatSalary = (min, max, currency) => {
+    if (!min && !max) return 'Thỏa thuận';
+    const curr = currency || 'USD';
+    if (min && max) return `${min.toLocaleString()} - ${max.toLocaleString()} ${curr}`;
+    if (min) return `Từ ${min.toLocaleString()} ${curr}`;
+    return `Đến ${max.toLocaleString()} ${curr}`;
+  };
+
+  // Chuyển hướng tới trang chi tiết công việc
+  const handleJobCardClick = (jobId) => {
+    navigate(`/job/${jobId}`);
+  };
+
+  // Yêu thích công việc (chặn nổi bọt sự kiện để không bị trigger click thẻ card)
   const toggleFavorite = async (e, jobId) => {
     e.stopPropagation();
     try {
@@ -108,13 +245,10 @@ function Jobs() {
       const isFavorited = response?.data;
 
       setFavorites((prev) =>
-        isFavorited
-          ? [...prev, jobId]
-          : prev.filter((id) => id !== jobId)
+        isFavorited ? [...prev, jobId] : prev.filter((id) => id !== jobId)
       );
     } catch (error) {
       console.error('Lỗi khi lưu/bỏ lưu công việc:', error);
-      // Fallback toggle state ở local nếu không có auth hoặc lỗi API
       setFavorites((prev) =>
         prev.includes(jobId) ? prev.filter((id) => id !== jobId) : [...prev, jobId]
       );
@@ -139,6 +273,7 @@ function Jobs() {
     setSelectedCategories([]);
     setSelectedExperiences([]);
     setSelectedType('');
+    setSortBy('Phù hợp nhất');
   };
 
   return (
@@ -170,23 +305,16 @@ function Jobs() {
                     </label>
                   ))
                 ) : (
-                  <>
-                    <label className={styles.checkboxLabel}>
-                      <input type="checkbox" />
-                      <span>IT / Phần mềm</span>
-                    </label>
-                    <label className={styles.checkboxLabel}>
-                      <input type="checkbox" />
-                      <span>Marketing / PR</span>
-                    </label>
-                  </>
+                  <p style={{ fontSize: '12px', color: '#6c757d' }}>
+                    Đang cập nhật danh mục...
+                  </p>
                 )}
               </div>
             </div>
 
             {/* Experience Filter */}
             <div className={styles.filterGroup}>
-              <h3>Kinh nghiệm</h3>
+              <h3>Trình độ / Kinh nghiệm</h3>
               <div className={styles.checkboxList}>
                 {experienceLevels.length > 0 ? (
                   experienceLevels.map((exp) => (
@@ -200,20 +328,21 @@ function Jobs() {
                     </label>
                   ))
                 ) : (
-                  <label className={styles.checkboxLabel}>
-                    <input type="checkbox" />
-                    <span>1 - 3 năm</span>
-                  </label>
+                  <p style={{ fontSize: '12px', color: '#6c757d' }}>
+                    Đang cập nhật kinh nghiệm...
+                  </p>
                 )}
               </div>
             </div>
 
-            {/* Job Type Filter */}
+            {/* Employment Type Filter */}
             <div className={styles.filterGroup}>
-              <h3>Hình thức</h3>
+              <h3>Hình thức làm việc</h3>
               <div className={styles.tagList}>
                 <span
-                  className={`${styles.tag} ${selectedType === '' ? styles.active : ''}`}
+                  className={`${styles.tag} ${
+                    selectedType === '' ? styles.active : ''
+                  }`}
                   onClick={() => setSelectedType('')}
                 >
                   Tất cả
@@ -271,14 +400,17 @@ function Jobs() {
           {/* Sorting Bar */}
           <div className={styles.sortBar}>
             <p className={styles.resultText}>
-              Tìm thấy <strong>{jobs.length}</strong> việc làm phù hợp
+              Tìm thấy <strong>{filteredJobs.length}</strong> việc làm phù hợp
             </p>
             <div className={styles.sortSelectGroup}>
               <span>Sắp xếp theo:</span>
-              <select>
-                <option>Phù hợp nhất</option>
-                <option>Mới nhất</option>
-                <option>Lương cao nhất</option>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+              >
+                <option value="Phù hợp nhất">Phù hợp nhất</option>
+                <option value="Mới nhất">Mới nhất</option>
+                <option value="Lương cao nhất">Lương cao nhất</option>
               </select>
             </div>
           </div>
@@ -287,19 +419,32 @@ function Jobs() {
           <div className={styles.jobList}>
             {loading ? (
               <p>Đang tải danh sách công việc...</p>
-            ) : (
-              jobs.map((job) => {
+            ) : paginatedJobs.length > 0 ? (
+              paginatedJobs.map((job) => {
                 const isFav = favorites.includes(job.id);
+
+                // Ưu tiên avatarUrl của Client từ UserResponse, fallback nếu null/rỗng
+                const clientAvatar = job.client?.avatarUrl || DEFAULT_AVATAR;
+
+                // Tên người tuyển dụng
+                const clientName = job.client
+                  ? `${job.client.firstName || ''} ${job.client.lastName || ''}`.trim() || job.client.username
+                  : 'Người tuyển dụng';
+
                 return (
-                  <div key={job.id} className={styles.jobCard}>
+                  <div
+                    key={job.id}
+                    className={styles.jobCard}
+                    onClick={() => handleJobCardClick(job.id)}
+                  >
                     <div className={styles.cardIndicator} />
                     <div className={styles.companyLogo}>
                       <img
-                        src={
-                          job.logo ||
-                          'https://via.placeholder.com/60?text=Job'
-                        }
-                        alt={job.company || 'Company'}
+                        src={clientAvatar}
+                        alt={clientName}
+                        onError={(e) => {
+                          e.target.src = DEFAULT_AVATAR;
+                        }}
                       />
                     </div>
                     <div className={styles.jobDetails}>
@@ -318,40 +463,107 @@ function Jobs() {
                           ></i>
                         </button>
                       </div>
+
                       <p className={styles.companyInfo}>
-                        {job.company || 'N/A'} • {job.location || 'Toàn quốc'}
+                        <strong>{job.companyName || clientName}</strong>
+                        {job.client && ` (${clientName})`} •{' '}
+                        {job.companyAddress || 'Toàn quốc'}
                       </p>
+
+                      {/* Badges */}
                       <div className={styles.badgeGroup}>
-                        {job.type && <span className={styles.badge}>{job.type}</span>}
-                        {job.experience && (
-                          <span className={styles.badge}>{job.experience}</span>
+                        {job.employmentType && (
+                          <span className={styles.badge}>
+                            {job.employmentType}
+                          </span>
                         )}
-                        <span className={`${styles.badge} ${styles.salaryBadge}`}>
+                        {job.experienceLevel && (
+                          <span className={styles.badge}>
+                            {job.experienceLevel}
+                            {job.requiredExperienceYears
+                              ? ` (${job.requiredExperienceYears} năm)`
+                              : ''}
+                          </span>
+                        )}
+                        {job.categories?.map((cat) => (
+                          <span key={cat.id} className={styles.badge}>
+                            {cat.name}
+                          </span>
+                        ))}
+                        <span
+                          className={`${styles.badge} ${styles.salaryBadge}`}
+                        >
                           <i className="bi bi-cash-stack"></i>{' '}
-                          {job.salary || 'Thỏa thuận'}
+                          {formatSalary(
+                            job.minBudget,
+                            job.maxBudget,
+                            job.currency
+                          )}
                         </span>
                       </div>
+
+                      {/* Required Skills */}
+                      {job.requiredSkills?.length > 0 && (
+                        <div
+                          className={styles.badgeGroup}
+                          style={{ marginBottom: '8px' }}
+                        >
+                          {job.requiredSkills.map((skill, idx) => (
+                            <span
+                              key={idx}
+                              className={styles.badge}
+                              style={{ opacity: 0.8 }}
+                            >
+                              #{skill}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
                       <p className={styles.jobDescription}>{job.description}</p>
                     </div>
                   </div>
                 );
               })
+            ) : (
+              <p>Không tìm thấy công việc nào phù hợp với bộ lọc.</p>
             )}
           </div>
 
           {/* Pagination */}
-          <div className={styles.pagination}>
-            <button className={styles.pageBtn} disabled>
-              <i className="bi bi-chevron-left"></i>
-            </button>
-            <button className={`${styles.pageBtn} ${styles.active}`}>1</button>
-            <button className={styles.pageBtn}>2</button>
-            <button className={styles.pageBtn}>3</button>
-            <span className={styles.ellipsis}>...</span>
-            <button className={styles.pageBtn}>
-              <i className="bi bi-chevron-right"></i>
-            </button>
-          </div>
+          {totalPages > 1 && (
+            <div className={styles.pagination}>
+              <button
+                className={styles.pageBtn}
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((prev) => prev - 1)}
+              >
+                <i className="bi bi-chevron-left"></i>
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (pageNum) => (
+                  <button
+                    key={pageNum}
+                    className={`${styles.pageBtn} ${
+                      currentPage === pageNum ? styles.active : ''
+                    }`}
+                    onClick={() => setCurrentPage(pageNum)}
+                  >
+                    {pageNum}
+                  </button>
+                )
+              )}
+
+              <button
+                className={styles.pageBtn}
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((prev) => prev + 1)}
+              >
+                <i className="bi bi-chevron-right"></i>
+              </button>
+            </div>
+          )}
         </main>
       </div>
     </div>

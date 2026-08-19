@@ -1,5 +1,6 @@
 package be_smart_job.dto.res.job;
 
+import be_smart_job.dto.res.identity.UserResponse; // Import UserResponse từ package identity
 import be_smart_job.enums.CurrencyType;
 import be_smart_job.enums.EmploymentType;
 import be_smart_job.enums.ExperienceLevel;
@@ -16,8 +17,9 @@ import java.util.List;
 @Builder
 public class JobResponse {
     private String id;
-    private String clientId;
-    private List<String> categoryIds;
+    private UserResponse client;
+    private List<CategoryResponse> categories;
+
     private String title;
     private String description;
     private String companyName;

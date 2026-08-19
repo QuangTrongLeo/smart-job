@@ -23,15 +23,15 @@ import {
 const publishRoutes = [
   { path: config.routes.home, component: Home },
   { path: config.routes.jobs, component: Jobs },
-  { path: config.routes.job, component: JobDetail },
-    { path: config.routes.login, component: Login },
-    { path: config.routes.register, component: Register },
-    { path: config.routes.profile, component: Profile },
-    { path: config.routes.verify, component: Verify },
-    { path: config.routes.forgot_password, component: ForgotPassword },
-    { path: config.routes.freelancers, component: Freelancers },
-    { path: config.routes.freelancer, component: FreelancerDetail },
-    { path: config.routes.messages, component: Messages },
+  { path: '/job/:id', component: JobDetail }, // Định nghĩa đường dẫn nhận parameter id
+  { path: config.routes.login, component: Login },
+  { path: config.routes.register, component: Register },
+  { path: config.routes.profile, component: Profile },
+  { path: config.routes.verify, component: Verify },
+  { path: config.routes.forgot_password, component: ForgotPassword },
+  { path: config.routes.freelancers, component: Freelancers },
+  { path: config.routes.freelancer, component: FreelancerDetail },
+  { path: config.routes.messages, component: Messages },
 ];
 
 const freelancerRoutes = [
@@ -42,7 +42,7 @@ const freelancerRoutes = [
 
 const clientRoutes = [
   { path: config.routes.manage_jobs, component: ClientJobManagement },
-  { path: config.routes.favorite_freelancers, component: FavoriteFreelancers }
+  
 ];
 
 // 4. Routes dành cho Admin (Mặc định dùng DefaultLayout có Sidebar)
