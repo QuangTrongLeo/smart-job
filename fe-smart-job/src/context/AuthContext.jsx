@@ -1,39 +1,36 @@
 // src/context/AuthContext.jsx
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { getCookie, setCookie, removeCookie } from '~/utils/cookie';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-
-  // Đọc thông tin user từ Cookie khi mới vào ứng dụng
-  useEffect(() => {
+  // Đọc cookie ngay khi khởi tạo state
+  const [user, setUser] = useState(() => {
     const userInfoCookie = getCookie('userInfo');
     if (userInfoCookie) {
       try {
-        setUser(JSON.parse(userInfoCookie));
+        return JSON.parse(userInfoCookie);
       } catch (error) {
         console.error('Lỗi parse userInfo cookie:', error);
       }
     }
-  }, []);
+    return null;
+  });
 
-  // Hàm Đăng nhập: Cập nhật Cookie + Cập nhật State user ngay lập tức
   const login = (authData) => {
     const { accessToken, refreshToken, user } = authData;
     setCookie('accessToken', accessToken, 1);
     setCookie('refreshToken', refreshToken, 7);
     setCookie('userInfo', JSON.stringify(user), 7);
-    setUser(user); // Kích hoạt re-render trên toàn hệ thống
+    setUser(user);
   };
 
-  // Hàm Đăng xuất: Xóa Cookie + Reset State user
   const logout = () => {
     removeCookie('accessToken');
     removeCookie('refreshToken');
     removeCookie('userInfo');
-    setUser(null); // Kích hoạt re-render trên toàn hệ thống
+    setUser(null);
   };
 
   return (

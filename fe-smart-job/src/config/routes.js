@@ -15,6 +15,8 @@ const routes = {
   messages: '/messages',
   favorite_jobs: '/favorite-jobs',
   favorite_freelancers: '/favorite-freelancers',
+  manage_jobs: '/manage-jobs',
+  manage_freelancers: '/manage-freelancers',
 };
 
 export default routes;

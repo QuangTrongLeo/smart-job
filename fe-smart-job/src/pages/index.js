@@ -11,3 +11,4 @@ export { default as FreelancerDetail } from './FreelancerDetail';
 export { default as Messages } from './Messages';
 export { default as FavoriteJobs } from './FavoriteJobs';
 export { default as FavoriteFreelancers } from './FavoriteFreelancers';
+export { default as ClientJobManagement } from './ClientJobManagement';

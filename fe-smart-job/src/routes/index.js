@@ -16,7 +16,8 @@ import {
     FreelancerDetail,
     Messages,
     FavoriteJobs,
-    FavoriteFreelancers
+    FavoriteFreelancers,
+    ClientJobManagement
 } from '~/pages';
 
 const publishRoutes = [
@@ -34,11 +35,6 @@ const publishRoutes = [
     { path: config.routes.favorite_jobs, component: FavoriteJobs },
     { path: config.routes.favorite_freelancers, component: FavoriteFreelancers }
 ];
-//   { path: '/jobs/:id', component: JobDetail }, // JobDetail dùng DefaultLayout
-  
-//   // Login & Register chỉ muốn có Header/Footer (không Sidebar) -> Dùng SecondLayout
-//   { path: '/login', component: Login, layout: SecondLayout },
-//   { path: '/register', component: Register, layout: SecondLayout },
 
 const freelancerRoutes = [
 //   { path: '/freelancer/dashboard', component: FreelancerDashboard },
@@ -46,8 +42,7 @@ const freelancerRoutes = [
 ];
 
 const clientRoutes = [
-//   { path: '/client/dashboard', component: ClientDashboard },
-//   { path: '/client/post-job', component: PostJob },
+  { path: config.routes.manage_jobs, component: ClientJobManagement },
 ];
 
 // 4. Routes dành cho Admin (Mặc định dùng DefaultLayout có Sidebar)

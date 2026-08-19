@@ -1,44 +1,64 @@
+// src/App.jsx
 import { Fragment } from 'react';
 import { Routes, Route } from 'react-router-dom';
 
 import { publishRoutes, freelancerRoutes, clientRoutes, adminRoutes } from '~/routes';
 import { DefaultLayout } from '~/layouts';
+import ProtectedRoute from '~/components/ProtectedRoute/ProtectedRoute'; // Import ProtectedRoute
 
 function App() {
-  const allRoutes = [
-    ...publishRoutes,
-    ...freelancerRoutes,
-    ...clientRoutes,
-    ...adminRoutes,
-  ];
+  // Hàm render Route kèm theo Layout và Bọc ProtectedRoute nếu cần
+  const renderRoutes = (routes, allowedRoles = null) => {
+    return routes.map((route, index) => {
+      if (!route.component) return null;
+
+      const Page = route.component;
+
+      let Layout = DefaultLayout;
+      if (route.layout) {
+        Layout = route.layout;
+      } else if (route.layout === null) {
+        Layout = Fragment;
+      }
+
+      // Nội dung JSX của route
+      const element = (
+        <Layout>
+          <Page />
+        </Layout>
+      );
+
+      return (
+        <Route
+          key={index}
+          path={route.path}
+          element={
+            allowedRoles ? (
+              <ProtectedRoute allowedRoles={allowedRoles}>
+                {element}
+              </ProtectedRoute>
+            ) : (
+              element
+            )
+          }
+        />
+      );
+    });
+  };
 
   return (
     <Routes>
-      {allRoutes.map((route, index) => {
-        // Bỏ qua route nếu không có component
-        if (!route.component) return null;
+      {/* 1. Public Routes: Ai cũng truy cập được */}
+      {renderRoutes(publishRoutes)}
 
-        const Page = route.component;
+      {/* 2. Client Routes: Chỉ dành cho Client */}
+      {renderRoutes(clientRoutes, ['CLIENT'])}
 
-        let Layout = DefaultLayout;
-        if (route.layout) {
-          Layout = route.layout;
-        } else if (route.layout === null) {
-          Layout = Fragment;
-        }
+      {/* 3. Freelancer Routes: Chỉ dành cho Freelancer */}
+      {renderRoutes(freelancerRoutes, ['FREELANCER'])}
 
-        return (
-          <Route
-            key={index}
-            path={route.path}
-            element={
-              <Layout>
-                <Page />
-              </Layout>
-            }
-          />
-        );
-      })}
+      {/* 4. Admin Routes: Chỉ dành cho Admin */}
+      {renderRoutes(adminRoutes, ['ADMIN'])}
     </Routes>
   );
 }
