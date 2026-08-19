@@ -7,16 +7,16 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
-@Mapper(componentModel = "spring", uses = {WorkExperienceMapper.class})
+@Mapper(componentModel = "spring")
 public interface FreelancerProfileMapper {
 
+    // Chuyển Request -> Entity
     FreelancerProfile toEntity(FreelancerProfileRequest request);
 
-    @Mapping(target = "fullName", ignore = true)
-    @Mapping(target = "email", ignore = true)
-    @Mapping(target = "avatarUrl", ignore = true)
-    @Mapping(target = "isVerified", ignore = true)
-    FreelancerProfileResponse toResponse(FreelancerProfile profile);
-
+    // Cập nhật Entity từ Request
     void updateEntityFromRequest(FreelancerProfileRequest request, @MappingTarget FreelancerProfile profile);
+
+    // Chuyển Entity -> Response (Bỏ qua user để enrich thủ công ở Service)
+    @Mapping(target = "user", ignore = true)
+    FreelancerProfileResponse toResponse(FreelancerProfile profile);
 }

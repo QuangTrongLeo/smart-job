@@ -30,7 +30,7 @@ function Header() {
   const userRole = (user?.roleType || user?.role || '').toUpperCase();
 
   const getDashboardLink = () => {
-    if (userRole === 'FREELANCER') return config.routes?.manage_freelancers || '/manage-freelancers';
+    if (userRole === 'FREELANCER') return config.routes?.manage_freelancer || '/manage-freelancers';
     if (userRole === 'CLIENT') return config.routes?.manage_jobs || '/manage-jobs';
     if (userRole === 'ADMIN') return '/admin/dashboard';
     return '/';

@@ -1,10 +1,12 @@
 package be_smart_job.service.job.impl;
 
 import be_smart_job.dto.req.job.FreelancerProfileRequest;
+import be_smart_job.dto.res.identity.UserResponse;
 import be_smart_job.dto.res.job.FreelancerProfileResponse;
 import be_smart_job.entity.FreelancerProfile;
 import be_smart_job.entity.User;
 import be_smart_job.enums.UserStatus;
+import be_smart_job.mapper.identity.UserMapper;
 import be_smart_job.mapper.job.FreelancerProfileMapper;
 import be_smart_job.repository.identity.UserRepository;
 import be_smart_job.repository.job.FreelancerProfileRepository;
@@ -23,6 +25,7 @@ public class FreelancerProfileServiceImpl implements FreelancerProfileService {
     private final FreelancerProfileRepository profileRepository;
     private final UserRepository userRepository;
     private final FreelancerProfileMapper profileMapper;
+    private final UserMapper userMapper;
 
     @Override
     public List<FreelancerProfileResponse> getAllProfiles() {
@@ -34,8 +37,10 @@ public class FreelancerProfileServiceImpl implements FreelancerProfileService {
 
     @Override
     public FreelancerProfileResponse getProfileByUserId(String userId) {
-        FreelancerProfile profile = profileRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy hồ sơ với User ID: " + userId));
+        FreelancerProfile profile = profileRepository.findByUserId(userId).orElse(null);
+        if (profile == null) {
+            return null;
+        }
         return enrichAndMapResponse(profile);
     }
 
@@ -43,8 +48,13 @@ public class FreelancerProfileServiceImpl implements FreelancerProfileService {
     public FreelancerProfileResponse getMyProfile() {
         validateFreelancerRole();
         String currentUserId = SecurityUtils.getCurrentUserId();
-        FreelancerProfile profile = profileRepository.findByUserId(currentUserId)
-                .orElseThrow(() -> new IllegalArgumentException("Bạn chưa tạo hồ sơ Freelancer"));
+
+        // Nếu chưa tạo hồ sơ, trả về null một cách nhẹ nhàng (Frontend nhận data: null)
+        FreelancerProfile profile = profileRepository.findByUserId(currentUserId).orElse(null);
+        if (profile == null) {
+            return null;
+        }
+
         return enrichAndMapResponse(profile);
     }
 
@@ -97,15 +107,16 @@ public class FreelancerProfileServiceImpl implements FreelancerProfileService {
     }
 
     private FreelancerProfileResponse enrichAndMapResponse(FreelancerProfile profile) {
+        if (profile == null) {
+            return null;
+        }
+
         FreelancerProfileResponse response = profileMapper.toResponse(profile);
         User user = userRepository.findById(profile.getUserId()).orElse(null);
 
         if (user != null) {
-            String fullName = (user.getLastName() != null ? user.getLastName() + " " : "") +
-                    (user.getFirstName() != null ? user.getFirstName() : "");
-            response.setFullName(fullName.trim());
-            response.setEmail(user.getEmail());
-            response.setAvatarUrl(user.getAvatarUrl());
+            UserResponse userResponse = userMapper.toResponse(user);
+            response.setUser(userResponse);
             response.setIsVerified(user.getStatus() == UserStatus.ACTIVE);
         }
 

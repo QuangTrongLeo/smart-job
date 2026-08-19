@@ -38,25 +38,25 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // Cho phép truy cập không cần token (khớp cả có /api và không /api)
-                        .requestMatchers("/api/auth/**", "/auth/**").permitAll()
+                        // Auth endpoints
+                        .requestMatchers("/auth/**").permitAll()
 
-                        // Các API yêu cầu xác thực
+                        // Các API cần đăng nhập (đặc tả trước)
                         .requestMatchers(
-                                "/api/users/my-profile", "/users/my-profile",
-                                "/api/jobs/my-jobs", "/jobs/my-jobs",
-                                "/api/freelancers/me", "/freelancers/me",
-                                "/api/favorites/**", "/favorites/**",
-                                "/api/chat/**", "/chat/**"
+                                "/users/my-profile",
+                                "/jobs/my-jobs",
+                                "/freelancers/me",
+                                "/favorites/**",
+                                "/chat/**"
                         ).authenticated()
 
-                        // Các API GET công khai
+                        // Các API Public GET (đặc tả sau)
                         .requestMatchers(HttpMethod.GET,
-                                "/api/users/**", "/users/**",
-                                "/api/categories/**", "/categories/**",
-                                "/api/jobs/**", "/jobs/**",
-                                "/api/enums/**", "/enums/**",
-                                "/api/freelancers/**", "/freelancers/**"
+                                "/users/**",
+                                "/categories/**",
+                                "/jobs/**",
+                                "/enums/**",
+                                "/freelancers/**"
                         ).permitAll()
 
                         .anyRequest().authenticated()

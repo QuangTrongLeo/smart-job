@@ -42,15 +42,15 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse getMyProfile() {
-        String currentUserId = SecurityUtils.getCurrentUserId();
-        User user = findUserById(currentUserId);
+        String currentUserEmail = SecurityUtils.getCurrentUserId(); // Trả về Email từ Access Token
+        User user = findUserByEmail(currentUserEmail);
         return userMapper.toResponse(user);
     }
 
     @Override
     public UserResponse updateProfile(UserUpdateRequest request) {
-        String currentUserId = SecurityUtils.getCurrentUserId();
-        User user = findUserById(currentUserId);
+        String currentUserEmail = SecurityUtils.getCurrentUserId();
+        User user = findUserByEmail(currentUserEmail);
         userMapper.updateUserFromRequest(request, user);
         User updatedUser = userRepository.save(user);
         return userMapper.toResponse(updatedUser);
@@ -58,8 +58,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse uploadAvatar(MultipartFile file) {
-        String currentUserId = SecurityUtils.getCurrentUserId();
-        User user = findUserById(currentUserId);
+        String currentUserEmail = SecurityUtils.getCurrentUserId();
+        User user = findUserByEmail(currentUserEmail);
 
         if (user.getAvatarUrl() != null && !user.getAvatarUrl().isEmpty()) {
             fileStorageService.deleteByUrl(user.getAvatarUrl());
@@ -74,8 +74,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void changePassword(ChangePasswordRequest request) {
-        String currentUserId = SecurityUtils.getCurrentUserId();
-        User user = findUserById(currentUserId);
+        String currentUserEmail = SecurityUtils.getCurrentUserId();
+        User user = findUserByEmail(currentUserEmail);
 
         if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
             throw new IllegalArgumentException("Mật khẩu cũ không chính xác");
@@ -105,5 +105,10 @@ public class UserServiceImpl implements UserService {
     private User findUserById(String id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy người dùng với ID: " + id));
+    }
+
+    private User findUserByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy người dùng với email: " + email));
     }
 }

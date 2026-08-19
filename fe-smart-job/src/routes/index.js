@@ -17,7 +17,8 @@ import {
     Messages,
     FavoriteJobs,
     FavoriteFreelancers,
-    ClientJobManagement
+    ClientJobManagement,
+    FreelancerProfileManager
 } from '~/pages';
 
 const publishRoutes = [
@@ -38,6 +39,7 @@ const freelancerRoutes = [
 //   { path: '/freelancer/dashboard', component: FreelancerDashboard },
 //   { path: '/freelancer/my-jobs', component: MyJobs },
   { path: config.routes.favorite_jobs, component: FavoriteJobs },
+  { path: config.routes.manage_freelancer, component: FreelancerProfileManager },
 ];
 
 const clientRoutes = [
