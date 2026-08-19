@@ -1,9 +1,11 @@
 package be_smart_job.config;
 
+import be_smart_job.entity.Category;
 import be_smart_job.entity.Role;
 import be_smart_job.entity.User;
 import be_smart_job.enums.RoleType;
 import be_smart_job.enums.UserStatus;
+import be_smart_job.repository.job.CategoryRepository;
 import be_smart_job.repository.identity.RoleRepository;
 import be_smart_job.repository.identity.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +15,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.List;
+
 @Configuration
 @RequiredArgsConstructor
 @Slf4j
@@ -20,6 +24,7 @@ public class DataInitializer {
 
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
+    private final CategoryRepository categoryRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Bean
@@ -33,6 +38,9 @@ public class DataInitializer {
 
                 // 2. Khởi tạo danh sách Users mẫu
                 initUsers();
+
+                // 3. Khởi tạo danh sách Categories mẫu
+                initCategories();
 
                 log.info("--- Data Initialization Completed Successfully ---");
             } catch (Exception e) {
@@ -56,17 +64,14 @@ public class DataInitializer {
     }
 
     private void initUsers() {
-        String defaultPassword = "123456"; // Mật khẩu chung cho tất cả tài khoản khởi tạo
+        String defaultPassword = "123456";
 
-        // 1 Admin Account
         createUserIfNotExist("admin", "admin@smartjob.com", defaultPassword, "System", "Admin", RoleType.ADMIN);
 
-        // 3 Freelancer Accounts
         createUserIfNotExist("freelancer1", "freelancer1@smartjob.com", defaultPassword, "Nguyen", "Van A", RoleType.FREELANCER);
         createUserIfNotExist("freelancer2", "freelancer2@smartjob.com", defaultPassword, "Tran", "Thi B", RoleType.FREELANCER);
         createUserIfNotExist("freelancer3", "freelancer3@smartjob.com", defaultPassword, "Le", "Van C", RoleType.FREELANCER);
 
-        // 3 Client Accounts
         createUserIfNotExist("client1", "client1@smartjob.com", defaultPassword, "Pham", "Van D", RoleType.CLIENT);
         createUserIfNotExist("client2", "client2@smartjob.com", defaultPassword, "Hoang", "Thi E", RoleType.CLIENT);
         createUserIfNotExist("client3", "client3@smartjob.com", defaultPassword, "Vu", "Van F", RoleType.CLIENT);
@@ -91,6 +96,31 @@ public class DataInitializer {
             log.info("Successfully initialized user: [{}] - Role: {}", username, roleType);
         } else {
             log.info("User already exists: [{}]", username);
+        }
+    }
+
+    private void initCategories() {
+        List<String> defaultCategories = List.of(
+                "IT / Phần mềm",
+                "IT / Phần cứng",
+                "Marketing & Quảng cáo",
+                "Sáng tạo & Thiết kế",
+                "Dịch thuật & Viết lách",
+                "Tài chính & Kế toán",
+                "Hành chính & Nhân sự",
+                "Tư vấn luật"
+        );
+
+        for (String categoryName : defaultCategories) {
+            if (!categoryRepository.existsByName(categoryName)) {
+                Category category = Category.builder()
+                        .name(categoryName)
+                        .build();
+                categoryRepository.save(category);
+                log.info("Successfully initialized category: {}", categoryName);
+            } else {
+                log.info("Category already exists: {}", categoryName);
+            }
         }
     }
 }

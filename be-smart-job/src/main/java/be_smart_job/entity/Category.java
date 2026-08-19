@@ -20,8 +20,4 @@ public class Category extends BaseEntity {
 
     @Indexed(unique = true)
     private String name;
-
-    @Indexed
-    @Field("parent_id")
-    private String parentId;
 }
