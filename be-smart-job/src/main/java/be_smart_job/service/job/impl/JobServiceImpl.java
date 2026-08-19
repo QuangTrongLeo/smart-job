@@ -4,7 +4,7 @@ import be_smart_job.dto.req.job.JobRequest;
 import be_smart_job.dto.res.job.JobResponse;
 import be_smart_job.entity.Job;
 import be_smart_job.mapper.job.JobMapper;
-import be_smart_job.repository.category.CategoryRepository;
+import be_smart_job.repository.job.CategoryRepository;
 import be_smart_job.repository.job.JobRepository;
 import be_smart_job.service.job.interfaces.JobService;
 import be_smart_job.util.SecurityUtils;
