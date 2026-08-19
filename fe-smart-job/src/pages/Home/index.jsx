@@ -1,7 +1,47 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { enumService } from '../../services';
 import styles from './Home.module.scss';
 
 function Home() {
+  const [employmentTypes, setEmploymentTypes] = useState([]);
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [selectedLocation, setSelectedLocation] = useState('');
+  const [selectedEmploymentType, setSelectedEmploymentType] = useState('');
+
+  // Danh sách địa điểm mock
+  const locations = [
+    { value: '', label: 'Tất cả tỉnh thành' },
+    { value: 'HCM', label: 'Tp.Hồ Chí Minh' },
+    { value: 'HN', label: 'Hà Nội' },
+    { value: 'DN', label: 'Đà Nẵng' },
+  ];
+
+  // Lấy danh sách Employment Types từ Backend
+  useEffect(() => {
+    const fetchEmploymentTypes = async () => {
+      try {
+        const response = await enumService.getEmploymentTypes();
+        if (response && response.data) {
+          setEmploymentTypes(response.data);
+        }
+      } catch (error) {
+        console.error('Lỗi khi lấy danh sách loại hình làm việc:', error);
+      }
+    };
+
+    fetchEmploymentTypes();
+  }, []);
+
+  const handleSearch = () => {
+    // Xử lý tìm kiếm với các state: searchKeyword, selectedLocation, selectedEmploymentType
+    console.log({
+      keyword: searchKeyword,
+      location: selectedLocation,
+      employmentType: selectedEmploymentType,
+    });
+  };
+
   return (
     <div className={styles.homeWrapper}>
       {/* Hero Section */}
@@ -15,22 +55,46 @@ function Home() {
         <div className={styles.searchBox}>
           <div className={styles.inputGroup}>
             <i className="bi bi-search"></i>
-            <input placeholder="Từ khóa công việc, kỹ năng..." type="text" />
+            <input
+              placeholder="Từ khóa công việc, kỹ năng..."
+              type="text"
+              value={searchKeyword}
+              onChange={(e) => setSearchKeyword(e.target.value)}
+            />
           </div>
+
+          {/* Chọn địa điểm */}
           <div className={styles.inputGroup}>
             <i className="bi bi-geo-alt"></i>
-            <input placeholder="Địa điểm" type="text" />
-          </div>
-          <div className={styles.inputGroup}>
-            <i className="bi bi-briefcase"></i>
-            <select defaultValue="">
-              <option value="" disabled hidden>Loại công việc</option>
-              <option value="freelance">Freelance</option>
-              <option value="fulltime">Full-time</option>
-              <option value="parttime">Part-time</option>
+            <select
+              value={selectedLocation}
+              onChange={(e) => setSelectedLocation(e.target.value)}
+            >
+              {locations.map((loc) => (
+                <option key={loc.value} value={loc.value}>
+                  {loc.label}
+                </option>
+              ))}
             </select>
           </div>
-          <button className={styles.btnSearch}>
+
+          {/* Chọn loại hình làm việc (Dynamic từ API) */}
+          <div className={styles.inputGroup}>
+            <i className="bi bi-briefcase"></i>
+            <select
+              value={selectedEmploymentType}
+              onChange={(e) => setSelectedEmploymentType(e.target.value)}
+            >
+              <option value="">Loại hình làm việc (Tất cả)</option>
+              {employmentTypes.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <button className={styles.btnSearch} onClick={handleSearch}>
             <i className="bi bi-search"></i>
             Tìm kiếm
           </button>
@@ -79,7 +143,9 @@ function Home() {
                 <span className={styles.typeBadge}>Remote</span>
               </div>
               <div className={styles.cardFooter}>
-                <span className={styles.salary}>$1500 - $2500 <span>/tháng</span></span>
+                <span className={styles.salary}>
+                  $1500 - $2500 <span>/tháng</span>
+                </span>
                 <span className={styles.timePosted}>2 ngày trước</span>
               </div>
             </div>
