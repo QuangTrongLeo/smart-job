@@ -14,14 +14,10 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // Kích hoạt CORS với cấu hình từ CorsConfig Bean
                 .cors(Customizer.withDefaults())
-
-                // Tắt CSRF vì dùng REST API Stateless với JWT
                 .csrf(csrf -> csrf.disable())
-
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers("/auth/**").permitAll() // Khớp với Controller @RequestMapping("/auth")
                         .anyRequest().authenticated()
                 );
 
