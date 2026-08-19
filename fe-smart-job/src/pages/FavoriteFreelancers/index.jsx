@@ -1,141 +1,170 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { favoriteService } from '~/services';
 import styles from './FavoriteFreelancers.module.scss';
 
-const FREELANCERS_DATA = [
-  {
-    id: 1,
-    name: 'Trần Văn A',
-    role: 'Senior UI/UX Designer',
-    avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDPAHHXijWBNwZrQV7rtmnIrA2OLO0Gp26a-Akng-mRjJzfJhJ2YWbiUmUdW5_-hDMqQrchrOxAmr7UsM0FkummoRp8a5S3fqCcVuD-ULHFcZlOBXNDG4R66SSCXCi6LFi2SR1Yqgbkcg_IH4TC1p1SUJhYXvQjFUJlNClGk8EAVjW7PC7GeiHg9X0lkJ02COoFx8mnMx3kU813AUUVlZ-EyUNojmcvVA81WIi7lU05S_wifKLvexwz',
-    rating: 4.9,
-    reviewsCount: 120,
-    skills: ['Figma', 'Prototyping', 'User Research'],
-    hourlyRate: 25,
-    successRate: 98,
-  },
-  {
-    id: 2,
-    name: 'Nguyễn Thị B',
-    role: 'Fullstack Developer',
-    avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBildk6ZInzJJMJ5_vvD_vlot0NPnr84_MN-KYwMY4qNlC354NIKAyQlW62K82E0gNFWE3J_tRn-Zo1VdgJuDW4f1qxK8EjgsjPYU1w-YCmbPvma-GxW42Z0kCFC5OkBC3oPygFiYM_o9JhtNnRCnYulcfMwNPQbb9dpx3XUe5wXxKoXYAcxb_yaq56jys33q6oeCui3MQ8LMqiZ8pcNwyoD6p5Whsy5LD2CJk04EzOWQGuS5nuGmXh',
-    rating: 5.0,
-    reviewsCount: 85,
-    skills: ['React', 'Node.js', 'TypeScript'],
-    hourlyRate: 35,
-    successRate: 100,
-  },
-  {
-    id: 3,
-    name: 'Lê Văn C',
-    role: 'Mobile App Expert',
-    avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAmyg3lCCh1KHZfxrC643G61UezC3cXU2vylIQIec4-yg9hqw8kWPCRY0qYKhGOFPh9ITOX9VBUiHzviHlbCR6DlrOw_M0tw1W9J1qHUSoSBOrk6zU8GezH6YMZV2vCKOgwi73al6XfuFzZaxlh7QcnRNVpJvZJbcmxz13LUAi726fZ2UlEt_E6VNCuxea1gnpMPBIRv8oMe2pN0bfUMMSkDKinshVQ_JrCxSM1oS4pAJwcnfL51kMd',
-    rating: 4.8,
-    reviewsCount: 210,
-    skills: ['Flutter', 'Dart', 'Firebase'],
-    hourlyRate: 30,
-    successRate: 95,
-  },
-];
+function FavoriteFreelancers() {
+  const [favoriteFreelancers, setFavoriteFreelancers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-const FavoriteFreelancers = () => {
+  useEffect(() => {
+    fetchFavoriteFreelancers();
+  }, []);
+
+  const fetchFavoriteFreelancers = async () => {
+    try {
+      setLoading(true);
+      const res = await favoriteService.getMyFavoriteFreelancers();
+      const data = res?.data || res;
+      setFavoriteFreelancers(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Lỗi khi tải danh sách Freelancer yêu thích:', err);
+      setError('Không thể tải danh sách Freelancer đã lưu. Vui lòng thử lại sau!');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleToggleFavorite = async (freelancerUserId) => {
+    try {
+      await favoriteService.toggleFavoriteFreelancer(freelancerUserId);
+      setFavoriteFreelancers((prev) =>
+        prev.filter((item) => item.freelancer?.userId !== freelancerUserId)
+      );
+    } catch (err) {
+      console.error('Lỗi khi xóa Freelancer khỏi danh sách yêu thích:', err);
+      alert('Có lỗi xảy ra khi thực hiện thao tác!');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className={styles.container} style={{ textAlign: 'center', paddingTop: '48px' }}>
+        <div className="spinner-border text-primary" role="status" />
+        <p style={{ marginTop: '12px', color: '#64748b', fontSize: '0.875rem' }}>
+          Đang tải danh sách Freelancer đã lưu...
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className={styles.favoriteFreelancersPage}>
-      <main className={styles.container}>
-        {/* Page Header */}
-        <div className={styles.header}>
-          <div>
-            <h1 className={styles.title}>Freelancer đã lưu</h1>
-            <p className={styles.subtitle}>
-              Đang lưu {FREELANCERS_DATA.length} Freelancer
-            </p>
-          </div>
+    <div className={styles.container}>
+      <div className={styles.headerSection}>
+        <div>
+          <h3 className={styles.title}>
+            <i className="bi bi-bookmark-star-fill"></i>
+            Freelancer đã lưu
+          </h3>
+          <p className={styles.subtitle}>
+            Danh sách các ứng viên nổi bật bạn đã lưu để liên hệ làm việc.
+          </p>
         </div>
+        <span className={styles.countBadge}>{favoriteFreelancers.length} Freelancers</span>
+      </div>
 
-        {/* Search and Filter Bar */}
-        <div className={styles.filterBar}>
-          <div className={styles.searchBox}>
-            <span className={`material-symbols-outlined ${styles.searchIcon}`}>
-              search
-            </span>
-            <input
-              type="text"
-              className={styles.searchInput}
-              placeholder="Tìm kiếm trong danh sách đã lưu..."
-            />
-          </div>
+      {error && <div className="alert alert-danger">{error}</div>}
 
-          <div className={styles.filterCategories}>
-            <button className={styles.btnFilterActive}>Tất cả</button>
-            <button className={styles.btnFilter}>UI/UX Design</button>
-            <button className={styles.btnFilter}>Web Dev</button>
-            <button className={styles.btnFilter}>Mobile Dev</button>
-            <button className={styles.btnFilter}>
-              <span className={`material-symbols-outlined ${styles.tuneIcon}`}>
-                tune
-              </span>
-              Bộ lọc khác
-            </button>
+      {!loading && favoriteFreelancers.length === 0 ? (
+        <div className={styles.emptyCard}>
+          <div className={styles.emptyIcon}>
+            <i className="bi bi-people"></i>
           </div>
+          <h5>Chưa có Freelancer nào trong danh sách đã lưu</h5>
+          <p>Hãy tìm kiếm freelancer phù hợp với dự án của bạn và bấm lưu lại.</p>
+          <Link to="/freelancers" className={styles.btnExplore}>
+            Tìm Freelancer
+          </Link>
         </div>
+      ) : (
+        <div className={styles.freelancerGrid}>
+          {favoriteFreelancers.map((item) => {
+            const profile = item.freelancer || {};
+            return (
+              <div key={item.id || profile.id} className={styles.freelancerCard}>
+                <div>
+                  <div className={styles.cardTop}>
+                    {profile.avatarUrl ? (
+                      <img
+                        src={profile.avatarUrl}
+                        alt={profile.fullName}
+                        className={styles.avatarImg}
+                      />
+                    ) : (
+                      <div className={styles.avatarFallback}>
+                        {profile.fullName ? profile.fullName.charAt(0).toUpperCase() : 'F'}
+                      </div>
+                    )}
 
-        {/* Freelancer Grid */}
-        <div className={styles.gridList}>
-          {FREELANCERS_DATA.map((freelancer) => (
-            <div key={freelancer.id} className={styles.card}>
-              <button className={styles.btnFavorite} aria-label="Bỏ yêu thích">
-                <span className="material-symbols-outlined">favorite</span>
-              </button>
+                    <div className={styles.infoMeta}>
+                      <div className={styles.nameRow}>
+                        <Link to={`/freelancer/${profile.id}`}>
+                          {profile.fullName || 'Chưa cập nhật tên'}
+                        </Link>
+                        {profile.isVerified && (
+                          <i
+                            className={`bi bi-patch-check-fill ${styles.verifiedIcon}`}
+                            title="Tài khoản đã xác minh"
+                          />
+                        )}
+                      </div>
+                      <p className={styles.title}>{profile.title || 'Chưa có chức danh'}</p>
+                      {profile.address && (
+                        <span className={styles.address}>
+                          <i className="bi bi-geo-alt me-1" />
+                          {profile.address}
+                        </span>
+                      )}
+                    </div>
 
-              <div className={styles.cardHeader}>
-                <img
-                  src={freelancer.avatar}
-                  alt={freelancer.name}
-                  className={styles.avatar}
-                />
-                <div className={styles.freelancerInfo}>
-                  <h3 className={styles.name}>{freelancer.name}</h3>
-                  <p className={styles.role}>{freelancer.role}</p>
-                  <div className={styles.ratingBox}>
-                    <span className={`material-symbols-outlined ${styles.starIcon}`}>
-                      star
-                    </span>
-                    <span className={styles.ratingScore}>{freelancer.rating}</span>
-                    <span>({freelancer.reviewsCount} đánh giá)</span>
+                    <button
+                      onClick={() => handleToggleFavorite(profile.userId)}
+                      className={styles.btnClose}
+                      title="Bỏ lưu Freelancer này"
+                    >
+                      <i className="bi bi-x-lg" />
+                    </button>
+                  </div>
+
+                  {profile.bio && <p className={styles.bio}>{profile.bio}</p>}
+
+                  <div className={styles.skillList}>
+                    {profile.skills?.slice(0, 5).map((skill, idx) => (
+                      <span key={idx} className={styles.skillBadge}>
+                        {skill}
+                      </span>
+                    ))}
+                    {profile.skills?.length > 5 && (
+                      <span className={styles.skillBadge}>
+                        +{profile.skills.length - 5}
+                      </span>
+                    )}
                   </div>
                 </div>
-              </div>
 
-              <div className={styles.skillsGroup}>
-                {freelancer.skills.map((skill, index) => (
-                  <span key={index} className={styles.skillTag}>
-                    {skill}
+                <div className={styles.cardBottom}>
+                  <span className={styles.ratingText}>
+                    Đánh giá:{' '}
+                    <strong>
+                      <i className="bi bi-star-fill me-1" />
+                      {profile.rating ? profile.rating.toFixed(1) : '5.0'}
+                    </strong>
+                    {profile.reviewCount ? ` (${profile.reviewCount})` : ''}
                   </span>
-                ))}
-              </div>
-
-              <div className={styles.statsRow}>
-                <div className={styles.rateBox}>
-                  <span className={styles.rateValue}>${freelancer.hourlyRate}</span>
-                  <span className={styles.rateUnit}>/giờ</span>
-                </div>
-                <div className={styles.successRateBox}>
-                  <span className={styles.successLabel}>Tỷ lệ thành công</span>
-                  <span className={styles.successValue}>
-                    {freelancer.successRate}%
+                  <span className={styles.rateText}>
+                    {profile.hourlyRate
+                      ? `${profile.hourlyRate.toLocaleString()} VNĐ/giờ`
+                      : 'Thỏa thuận'}
                   </span>
                 </div>
               </div>
-
-              <div className={styles.actionGroup}>
-                <button className={styles.btnContact}>Liên hệ</button>
-                <button className={styles.btnInvite}>Mời làm việc</button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
-      </main>
+      )}
     </div>
   );
-};
+}
 
 export default FavoriteFreelancers;

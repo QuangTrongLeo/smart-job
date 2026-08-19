@@ -4,7 +4,11 @@ export const setCookie = (name, value, days = 7) => {
   const date = new Date();
   date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
   const expires = `; expires=${date.toUTCString()}`;
-  document.cookie = `${name}=${encodeURIComponent(value || '')}${expires}; path=/; Secure; SameSite=Lax`;
+  
+  const isSecure = window.location.protocol === 'https:';
+  const secureFlag = isSecure ? '; Secure' : '';
+
+  document.cookie = `${name}=${encodeURIComponent(value || '')}${expires}; path=/${secureFlag}; SameSite=Lax`;
 };
 
 export const getCookie = (name) => {
@@ -19,5 +23,8 @@ export const getCookie = (name) => {
 };
 
 export const removeCookie = (name) => {
-  document.cookie = `${name}=; Max-Age=-99999999; path=/;`;
+  const isSecure = window.location.protocol === 'https:';
+  const secureFlag = isSecure ? '; Secure' : '';
+  
+  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/${secureFlag}; SameSite=Lax`;
 };

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { jobService, categoryService } from '../../services';
+import { jobService, categoryService, enumService } from '~/services';
 import styles from './ClientJobManagement.module.scss';
 
 const INITIAL_FORM_STATE = {
@@ -7,36 +7,52 @@ const INITIAL_FORM_STATE = {
   description: '',
   companyName: '',
   companyAddress: '',
-  experienceLevel: 'JUNIOR',
+  experienceLevel: '',
   requiredExperienceYears: 1,
-  employmentType: 'FULL_TIME',
+  employmentType: '',
   categoryIds: [],
   requiredSkills: '',
   minBudget: '',
   maxBudget: '',
-  currency: 'VND',
+  currency: '',
 };
 
-const EXPERIENCE_OPTIONS = [
-  { value: 'NO_EXPERIENCE', label: 'Chưa có kinh nghiệm' },
-  { value: 'INTERN_FRESHER', label: 'Thực tập / Fresher' },
-  { value: 'JUNIOR', label: 'Junior' },
-  { value: 'MIDDLE', label: 'Middle' },
-  { value: 'SENIOR', label: 'Senior' },
-  { value: 'EXPERT', label: 'Chuyên gia (Expert)' },
-];
+// Map hiển thị nhãn Tiếng Việt thân thiện cho từng giá trị Enum
+const ENUM_LABELS = {
+  // Experience Level
+  NO_EXPERIENCE: 'Chưa có kinh nghiệm',
+  INTERN_FRESHER: 'Thực tập / Fresher',
+  JUNIOR: 'Junior',
+  MIDDLE: 'Middle',
+  SENIOR: 'Senior',
+  EXPERT: 'Chuyên gia (Expert)',
 
-const EMPLOYMENT_OPTIONS = [
-  { value: 'FULL_TIME', label: 'Toàn thời gian (Full-time)' },
-  { value: 'PART_TIME', label: 'Bán thời gian (Part-time)' },
-  { value: 'FREELANCE', label: 'Tự do (Freelance)' },
-  { value: 'REMOTE', label: 'Làm từ xa (Remote)' },
-  { value: 'HYBRID', label: 'Làm việc linh hoạt (Hybrid)' },
-];
+  // Employment Type
+  FULL_TIME: 'Toàn thời gian (Full-time)',
+  PART_TIME: 'Bán thời gian (Part-time)',
+  FREELANCE: 'Tự do (Freelance)',
+  REMOTE: 'Làm từ xa (Remote)',
+  HYBRID: 'Làm việc linh hoạt (Hybrid)',
+
+  // Job Status
+  DRAFT: 'Bản nháp',
+  OPEN: 'Đang tuyển',
+  CLOSED: 'Đã đóng',
+  CANCELLED: 'Đã hủy',
+};
+
+const getEnumLabel = (val) => ENUM_LABELS[val] || val;
 
 function ClientJobManagement() {
   const [jobs, setJobs] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [enums, setEnums] = useState({
+    currencies: [],
+    employmentTypes: [],
+    experienceLevels: [],
+    jobStatuses: [],
+  });
+
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -50,7 +66,35 @@ function ClientJobManagement() {
   useEffect(() => {
     fetchMyJobs();
     fetchCategories();
+    fetchEnums();
   }, []);
+
+  const fetchEnums = async () => {
+    try {
+      const res = await enumService.getAllEnums();
+      const data = res?.data?.data || res?.data || {};
+      const fetchedCurrencies = data.currencies || [];
+      const fetchedEmpTypes = data.employmentTypes || [];
+      const fetchedExpLevels = data.experienceLevels || [];
+
+      setEnums({
+        currencies: fetchedCurrencies,
+        employmentTypes: fetchedEmpTypes,
+        experienceLevels: fetchedExpLevels,
+        jobStatuses: data.jobStatuses || [],
+      });
+
+      // Thiết lập giá trị mặc định cho form dựa trên Enum trả về
+      setFormData((prev) => ({
+        ...prev,
+        currency: fetchedCurrencies[0] || 'VND',
+        employmentType: fetchedEmpTypes[0] || 'FULL_TIME',
+        experienceLevel: fetchedExpLevels[0] || 'JUNIOR',
+      }));
+    } catch (error) {
+      console.error('Lỗi lấy danh sách Enum:', error);
+    }
+  };
 
   const fetchMyJobs = async () => {
     setLoading(true);
@@ -75,7 +119,12 @@ function ClientJobManagement() {
 
   const handleOpenCreateModal = () => {
     setEditingJobId(null);
-    setFormData(INITIAL_FORM_STATE);
+    setFormData({
+      ...INITIAL_FORM_STATE,
+      currency: enums.currencies[0] || 'VND',
+      employmentType: enums.employmentTypes[0] || 'FULL_TIME',
+      experienceLevel: enums.experienceLevels[0] || 'JUNIOR',
+    });
     setErrorMsg('');
     setShowModal(true);
   };
@@ -87,14 +136,14 @@ function ClientJobManagement() {
       description: job.description || '',
       companyName: job.companyName || '',
       companyAddress: job.companyAddress || '',
-      experienceLevel: job.experienceLevel || 'JUNIOR',
+      experienceLevel: job.experienceLevel || enums.experienceLevels[0] || '',
       requiredExperienceYears: job.requiredExperienceYears ?? 0,
-      employmentType: job.employmentType || 'FULL_TIME',
+      employmentType: job.employmentType || enums.employmentTypes[0] || '',
       categoryIds: job.categoryIds || [],
       requiredSkills: Array.isArray(job.requiredSkills) ? job.requiredSkills.join(', ') : '',
       minBudget: job.minBudget ?? '',
       maxBudget: job.maxBudget ?? '',
-      currency: job.currency || 'VND',
+      currency: job.currency || enums.currencies[0] || 'VND',
     });
     setErrorMsg('');
     setShowModal(true);
@@ -202,7 +251,7 @@ function ClientJobManagement() {
                     <td>
                       <div className={styles.jobTitle}>{job.title}</div>
                       <span className={styles.subDetail}>
-                        Kinh nghiệm: {EXPERIENCE_OPTIONS.find((e) => e.value === job.experienceLevel)?.label || job.experienceLevel}
+                        Kinh nghiệm: {getEnumLabel(job.experienceLevel)}
                       </span>
                     </td>
                     <td>
@@ -216,12 +265,12 @@ function ClientJobManagement() {
                     </td>
                     <td>
                       <span className={styles.badgeEmployment}>
-                        {EMPLOYMENT_OPTIONS.find((e) => e.value === job.employmentType)?.label || job.employmentType}
+                        {getEnumLabel(job.employmentType)}
                       </span>
                     </td>
                     <td>
                       <span className={`${styles.badgeStatus} ${styles[job.status?.toLowerCase()]}`}>
-                        {job.status}
+                        {getEnumLabel(job.status)}
                       </span>
                     </td>
                     <td>
@@ -306,9 +355,9 @@ function ClientJobManagement() {
                     value={formData.experienceLevel}
                     onChange={handleChange}
                   >
-                    {EXPERIENCE_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
+                    {enums.experienceLevels.map((level) => (
+                      <option key={level} value={level}>
+                        {getEnumLabel(level)}
                       </option>
                     ))}
                   </select>
@@ -332,9 +381,9 @@ function ClientJobManagement() {
                     value={formData.employmentType}
                     onChange={handleChange}
                   >
-                    {EMPLOYMENT_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
+                    {enums.employmentTypes.map((type) => (
+                      <option key={type} value={type}>
+                        {getEnumLabel(type)}
                       </option>
                     ))}
                   </select>
@@ -383,8 +432,11 @@ function ClientJobManagement() {
                 <div>
                   <label>Đơn vị tiền tệ</label>
                   <select name="currency" value={formData.currency} onChange={handleChange}>
-                    <option value="VND">VND</option>
-                    <option value="USD">USD</option>
+                    {enums.currencies.map((curr) => (
+                      <option key={curr} value={curr}>
+                        {curr}
+                      </option>
+                    ))}
                   </select>
                 </div>
 

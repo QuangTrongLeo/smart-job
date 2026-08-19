@@ -1,126 +1,162 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { favoriteService } from '~/services';
 import styles from './FavoriteJobs.module.scss';
 
-const FAVORITE_JOBS = [
-  {
-    id: 1,
-    title: 'Senior Frontend Developer (React/Vue)',
-    company: 'TechNova Solutions',
-    logo: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAKGMdzaDa8A2LvHcskWkkBP3ZxZdZ8Rff3DbQNk-wRZVTMcajIdB243AbEPkiMsHZ-LWIxA4gBHbYghqfOIsHK7P1_Vo2tliCq_MpD9YtzD1tbp9kYMz1eat9bnq_XdSoHzn-5ZIUNzgezOU6KCbSGVOTSBf_B_Ck1oNEGnzQa2SBevutuFByyu9eLpYjAV9xsKMlNbJ7fixyYjTPuHCjcDIMitiSJJ4guUFiGWv9s8ChTbHrAbv3E',
-    location: 'Hà Nội (Hybrid)',
-    salary: '$1500 - $2500',
-    skills: ['ReactJS', 'TypeScript', 'TailwindCSS'],
-    savedAt: 'Đã lưu 2 ngày trước',
-  },
-  {
-    id: 2,
-    title: 'UI/UX Designer (Figma/Webflow)',
-    company: 'Creative Pulse',
-    logo: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBENvvDn9U0bVPXTzs4zaFdYYinG7AzamNZjj2Xu9hiPldDwIrIbdmWD_s0wDWLx04Pdc2akz65pCxvOQ4bO_Q4jhcRnECueMGUTNmHXxoDLn04sRU7itgnGdN9kfsH-vE4XMA1iHTzJT3YXKgtrYZ2ctinGVemPRBB8dMuQAe8vFfQHu7v9Td1_xA_7tDKJWt1wvF7Z7AVdnlmOPNTjEqOfmGd6apUdCvNdJ4FEwCz92r99GNZwTce',
-    location: 'Remote',
-    salary: 'Thỏa thuận',
-    skills: ['Figma', 'Prototyping', 'Webflow'],
-    savedAt: 'Đã lưu 3 ngày trước',
-  },
-  {
-    id: 3,
-    title: 'Digital Marketing Specialist',
-    company: 'GrowthX Agency',
-    logo: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCdDlLVRtu2FLDv6zHC9eTh2LPDdF3KnNLlcApTDFpdDPMIncbefh21sL3wi4vKuRzjitCJ_mHvpjUcpHRvGuofcQPw67a7kL0TinmD1_aoEtHf__VxQUGS0hDnsGscpl1HQcAT5-rOk_h39P4ovkM1qU97s3EIfhhkprc1tVCA0m3vK6o3gHCF1I7HkMfhBiFvpUaIIW9YPxUr1Y0WOBpmzvVxKMX1H5xShvCrgF9_OareXY_lAazK',
-    location: 'TP. Hồ Chí Minh',
-    salary: '15M - 25M VNĐ',
-    skills: ['SEO', 'Google Ads', 'Analytics'],
-    savedAt: 'Đã lưu 1 tuần trước',
-  },
-];
+function FavoriteJobs() {
+  const [favoriteJobs, setFavoriteJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-const FavoriteJobs = () => {
+  useEffect(() => {
+    fetchFavoriteJobs();
+  }, []);
+
+  const fetchFavoriteJobs = async () => {
+    try {
+      setLoading(true);
+      const res = await favoriteService.getMyFavoriteJobs();
+      const data = res?.data || res;
+      setFavoriteJobs(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Lỗi khi tải danh sách công việc yêu thích:', err);
+      setError('Không thể tải danh sách công việc yêu thích. Vui lòng thử lại sau!');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleToggleFavorite = async (jobId) => {
+    try {
+      await favoriteService.toggleFavoriteJob(jobId);
+      setFavoriteJobs((prev) => prev.filter((item) => item.job?.id !== jobId));
+    } catch (err) {
+      console.error('Lỗi khi xóa công việc khỏi danh sách yêu thích:', err);
+      alert('Có lỗi xảy ra khi thực hiện thao tác!');
+    }
+  };
+
+  const formatBudget = (min, max, currency) => {
+    const curr = currency || 'VND';
+    if (!min && !max) return 'Thỏa thuận';
+    if (min && max) return `${min.toLocaleString()} - ${max.toLocaleString()} ${curr}`;
+    if (min) return `Từ ${min.toLocaleString()} ${curr}`;
+    return `Đến ${max.toLocaleString()} ${curr}`;
+  };
+
+  if (loading) {
+    return (
+      <div className={styles.container} style={{ textAlign: 'center', paddingTop: '48px' }}>
+        <div className="spinner-border text-primary" role="status" />
+        <p style={{ marginTop: '12px', color: '#64748b', fontSize: '0.875rem' }}>
+          Đang tải danh sách công việc đã lưu...
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className={styles.jobFavoritePage}>
-      <main className={styles.container}>
-        {/* Header Section */}
-        <div className={styles.header}>
-          <div className={styles.titleBox}>
-            <h1 className={styles.title}>Việc làm đã lưu</h1>
-            <p className={styles.subtitle}>
-              Đang lưu {FAVORITE_JOBS.length} việc làm
-            </p>
-          </div>
-
-          <div className={styles.filterGroup}>
-            <div className={styles.searchBox}>
-              <span className={`material-symbols-outlined ${styles.searchIcon}`}>
-                search
-              </span>
-              <input
-                type="text"
-                className={styles.searchInput}
-                placeholder="Tìm trong danh sách lưu..."
-              />
-            </div>
-            <button className={styles.btnFilter} aria-label="Lọc">
-              <span className="material-symbols-outlined">filter_list</span>
-            </button>
-          </div>
+    <div className={styles.container}>
+      <div className={styles.headerSection}>
+        <div>
+          <h3 className={styles.title}>
+            <i className="bi bi-heart-fill"></i>
+            Công việc đã lưu
+          </h3>
+          <p className={styles.subtitle}>
+            Danh sách các dự án bạn quan tâm và đã đánh dấu lưu.
+          </p>
         </div>
+        <span className={styles.countBadge}>{favoriteJobs.length} công việc</span>
+      </div>
 
-        {/* Cards Grid */}
-        <div className={styles.gridList}>
-          {FAVORITE_JOBS.map((job) => (
-            <div key={job.id} className={styles.jobCard}>
-              <button className={styles.btnBookmark} aria-label="Bỏ lưu">
-                <span className="material-symbols-outlined">bookmark</span>
-              </button>
+      {error && <div className="alert alert-danger">{error}</div>}
 
-              <div className={styles.cardHeader}>
-                <img
-                  src={job.logo}
-                  alt={job.company}
-                  className={styles.companyLogo}
-                />
-                <div className={styles.headerInfo}>
-                  <h2 className={styles.jobTitle}>{job.title}</h2>
-                  <p className={styles.companyName}>{job.company}</p>
+      {!loading && favoriteJobs.length === 0 ? (
+        <div className={styles.emptyCard}>
+          <div className={styles.emptyIcon}>
+            <i className="bi bi-bookmark-heart"></i>
+          </div>
+          <h5>Chưa có công việc nào trong danh sách yêu thích</h5>
+          <p>Hãy khám phá danh sách việc làm và bấm lưu công việc bạn quan tâm.</p>
+          <Link to="/jobs" className={styles.btnExplore}>
+            Khám phá việc làm
+          </Link>
+        </div>
+      ) : (
+        <div className={styles.jobList}>
+          {favoriteJobs.map((item) => {
+            const job = item.job || {};
+            return (
+              <div key={item.id || job.id} className={styles.jobCard}>
+                <div className={styles.cardTop}>
+                  <div style={{ flex: 1 }}>
+                    <h5 className={styles.jobTitle}>
+                      <Link to={`/job/${job.id}`}>
+                        {job.title || 'Chưa cập nhật tiêu đề'}
+                      </Link>
+                    </h5>
+                    <div className={styles.companyMeta}>
+                      <i className="bi bi-building"></i>
+                      <span>{job.companyName || 'Công ty chưa cập nhật'}</span>
+                      {job.companyAddress && <span>• {job.companyAddress}</span>}
+                    </div>
+
+                    <div className={styles.skillList}>
+                      {job.requiredSkills?.map((skill, idx) => (
+                        <span key={idx} className={styles.skillBadge}>
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => handleToggleFavorite(job.id)}
+                    className={styles.btnRemove}
+                    title="Bỏ lưu công việc này"
+                  >
+                    <i className="bi bi-heart-fill me-1"></i> Bỏ lưu
+                  </button>
                 </div>
-              </div>
 
-              <div className={styles.badgeGroup}>
-                <span className={styles.badgeLocation}>
-                  <span className="material-symbols-outlined">location_on</span>{' '}
-                  {job.location}
-                </span>
-                <span className={styles.badgeSalary}>
-                  <span className="material-symbols-outlined">payments</span>{' '}
-                  {job.salary}
-                </span>
-              </div>
+                <div className={styles.divider} />
 
-              <div className={styles.skillsBox}>
-                <p className={styles.skillsLabel}>Kỹ năng yêu cầu:</p>
-                <div className={styles.tags}>
-                  {job.skills.map((skill, index) => (
-                    <span key={index} className={styles.skillTag}>
-                      {skill}
+                <div className={styles.cardBottom}>
+                  <div className={styles.infoGroup}>
+                    <span>
+                      <i className="bi bi-cash-stack me-1 text-success"></i>
+                      Ngân sách:{' '}
+                      <strong className={styles.budgetText}>
+                        {formatBudget(job.minBudget, job.maxBudget, job.currency)}
+                      </strong>
                     </span>
-                  ))}
+                    {job.employmentType && (
+                      <span>
+                        <i className="bi bi-briefcase me-1"></i> Hình thức:{' '}
+                        <strong>{job.employmentType}</strong>
+                      </span>
+                    )}
+                    {job.experienceLevel && (
+                      <span>
+                        <i className="bi bi-bar-chart me-1"></i> Kinh nghiệm:{' '}
+                        <strong>{job.experienceLevel}</strong>
+                      </span>
+                    )}
+                  </div>
+                  {item.createdAt && (
+                    <span className={styles.saveDate}>
+                      Lưu ngày: {new Date(item.createdAt).toLocaleDateString('vi-VN')}
+                    </span>
+                  )}
                 </div>
               </div>
-
-              <div className={styles.cardFooter}>
-                <span className={styles.savedTime}>{job.savedAt}</span>
-                <button className={styles.btnApply}>Ứng tuyển ngay</button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
-
-        {/* Action Button */}
-        <div className={styles.loadMoreBox}>
-          <button className={styles.btnLoadMore}>Tải thêm việc làm</button>
-        </div>
-      </main>
+      )}
     </div>
   );
-};
+}
 
 export default FavoriteJobs;

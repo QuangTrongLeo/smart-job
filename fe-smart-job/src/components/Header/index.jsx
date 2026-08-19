@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import config from '~/config';
-import { useAuth } from '~/context/AuthContext'; // 1. Import useAuth
+import { useAuth } from '~/context/AuthContext';
 import styles from './Header.module.scss';
 
 function Header() {
   const navigate = useNavigate();
-  const { user, logout } = useAuth(); // 2. Lấy state user và hàm logout từ AuthContext
+  const { user, logout } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Bắt sự kiện click ra bên ngoài để đóng Dropdown
+  // Đóng Dropdown khi click ngoài
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -21,28 +21,25 @@ function Header() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Xử lý đăng xuất
   const handleLogout = () => {
-    logout(); // 3. Gọi logout từ Context
+    logout();
     setShowDropdown(false);
     navigate(config.routes?.login || '/login');
   };
 
-  // Xác định đường dẫn Dashboard tương ứng với Role
+  const userRole = (user?.roleType || user?.role || '').toUpperCase();
+
   const getDashboardLink = () => {
-    const role = (user?.roleType || user?.role || '').toUpperCase();
-    if (role === 'FREELANCER') return config.routes?.freelancer_dashboard || '/freelancer/dashboard';
-    if (role === 'CLIENT') return config.routes?.client_dashboard || '/client/dashboard';
-    if (role === 'ADMIN') return config.routes?.admin_dashboard || '/admin/dashboard';
+    if (userRole === 'FREELANCER') return config.routes?.manage_freelancers || '/manage-freelancers';
+    if (userRole === 'CLIENT') return config.routes?.manage_jobs || '/manage-jobs';
+    if (userRole === 'ADMIN') return '/admin/dashboard';
     return '/';
   };
 
-  // Xác định nhãn hiển thị trong Dropdown tương ứng với Role
   const getDashboardLabel = () => {
-    const role = (user?.roleType || user?.role || '').toUpperCase();
-    if (role === 'FREELANCER') return 'Cập nhật thông tin & Dashboard';
-    if (role === 'CLIENT') return 'Tạo công việc & Dashboard';
-    if (role === 'ADMIN') return 'Trang quản trị (Admin)';
+    if (userRole === 'FREELANCER') return 'Quản lý hồ sơ';
+    if (userRole === 'CLIENT') return 'Quản lý công việc';
+    if (userRole === 'ADMIN') return 'Trang quản trị (Admin)';
     return 'Trang cá nhân';
   };
 
@@ -65,17 +62,15 @@ function Header() {
       <div className={styles.rightSection}>
         {user ? (
           <div className={styles.userActions}>
-            {/* Icon Thông báo */}
             <button className={styles.iconBtn} title="Thông báo">
               <i className="bi bi-bell"></i>
             </button>
 
-            {/* Icon Tin nhắn/Chat */}
             <button className={styles.iconBtn} title="Tin nhắn">
               <i className="bi bi-chat-dots"></i>
             </button>
 
-            {/* Avatar & Dropdown Menu */}
+            {/* Avatar & Dropdown */}
             <div className={styles.avatarWrapper} ref={dropdownRef}>
               <button 
                 className={styles.avatarBtn} 
@@ -90,7 +85,6 @@ function Header() {
                 )}
               </button>
 
-              {/* Menu xổ xuống */}
               {showDropdown && (
                 <div className={styles.dropdownMenu}>
                   <div className={styles.userInfoHeader}>
@@ -100,12 +94,13 @@ function Header() {
                         : user.username || user.email}
                     </p>
                     <span className={styles.userRoleTag}>
-                      {user.roleType || user.role}
+                      {userRole}
                     </span>
                   </div>
 
                   <div className={styles.divider} />
 
+                  {/* Dashboard link */}
                   <Link 
                     to={getDashboardLink()} 
                     className={styles.dropdownItem}
@@ -114,6 +109,31 @@ function Header() {
                     <i className="bi bi-speedometer2 me-2"></i>
                     {getDashboardLabel()}
                   </Link>
+
+                  {/* Hiển thị link yêu thích tương ứng với Role */}
+                  {userRole === 'FREELANCER' && (
+                    <Link 
+                      to={config.routes.favorite_jobs} 
+                      className={styles.dropdownItem}
+                      onClick={() => setShowDropdown(false)}
+                    >
+                      <i className="bi bi-heart me-2 text-danger"></i>
+                      Công việc đã lưu
+                    </Link>
+                  )}
+
+                  {userRole === 'CLIENT' && (
+                    <Link 
+                      to={config.routes.favorite_freelancers} 
+                      className={styles.dropdownItem}
+                      onClick={() => setShowDropdown(false)}
+                    >
+                      <i className="bi bi-bookmark-star me-2 text-warning"></i>
+                      Freelancer đã lưu
+                    </Link>
+                  )}
+
+                  <div className={styles.divider} />
 
                   <button 
                     className={`${styles.dropdownItem} ${styles.logoutBtn}`}

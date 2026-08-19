@@ -1,26 +1,24 @@
-import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '~/context/AuthContext';
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '~/context/AuthContext'; // Hoặc hook auth của bạn
 
-function ProtectedRoute({ allowedRoles, children }) {
-  const { user } = useAuth();
-  const location = useLocation();
+function ProtectedRoute({ children, allowedRoles }) {
+  const { user, loading } = useAuth();
 
-  // 1. Chưa đăng nhập -> Chuyển hướng về Login (lưu lại trang đang muốn vào qua state)
-  if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+  // 1. Chờ khôi phục phiên đăng nhập từ Cookie/Token
+  if (loading) {
+    return <div>Loading...</div>; 
   }
 
-  // 2. Chuẩn hóa Role của User (Hỗ trợ đọc từ user.role, user.roleId hoặc user.roleName)
-  const currentRole = (user.role || user.roleId || user.roleName || '').toUpperCase();
+  // 2. Chưa đăng nhập -> Chuyển về Login hoặc Trang chủ
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
 
-  // 3. Kiểm tra xem Role của user có nằm trong danh sách cho phép không
-  const hasPermission = allowedRoles.some((role) => {
-    const upperRole = role.toUpperCase();
-    return currentRole === upperRole || currentRole === `ROLE_${upperRole}`;
-  });
+  // 3. Kiểm tra Role
+  // Lưu ý: Chuẩn hóa role về chữ hoa để tránh lỗi lệch hoa/thường
+  const userRole = user?.role?.toUpperCase(); 
+  const hasPermission = allowedRoles.some((role) => role.toUpperCase() === userRole);
 
-  // 4. Đã đăng nhập nhưng không đúng Role -> Về trang chủ
   if (!hasPermission) {
     return <Navigate to="/" replace />;
   }

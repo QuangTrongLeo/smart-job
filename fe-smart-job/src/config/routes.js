@@ -1,3 +1,5 @@
+// src/config/routes.js
+
 const routes = {
   home: '/',
   jobs: '/jobs',
@@ -7,11 +9,10 @@ const routes = {
   profile: '/profile',
   forgot_password: '/forgot-password',
   freelancers: '/freelancers',
+  freelancer: '/freelancer',
   explore: '/explore',
   about: '/about',
   verify: '/verify',
-  freelancers: '/freelancers',
-  freelancer: '/freelancer',
   messages: '/messages',
   favorite_jobs: '/favorite-jobs',
   favorite_freelancers: '/favorite-freelancers',
