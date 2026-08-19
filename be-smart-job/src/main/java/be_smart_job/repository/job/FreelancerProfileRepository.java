@@ -10,4 +10,5 @@ import java.util.Optional;
 public interface FreelancerProfileRepository extends MongoRepository<FreelancerProfile, String> {
     Optional<FreelancerProfile> findByUserId(String userId);
     boolean existsByUserId(String userId);
+    void deleteByUserId(String userId);
 }

@@ -7,6 +7,7 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,12 +26,17 @@ public class FreelancerProfile extends BaseEntity {
     @Field("user_id")
     private String userId;
 
-    private String title;
-    private String bio;
-    private Integer yearsOfExperience;
-    private String availabilityStatus;
+    private String title;                // VD: "Senior Fullstack Developer"
+    private String bio;                  // Đoạn văn Giới thiệu
+    private Integer yearsOfExperience;   // VD: 5
+    private String availabilityStatus;   // VD: "Đang nhận dự án"
 
-    private String address; // Địa chỉ trực tiếp của Freelancer (VD: "Hà Nội, Việt Nam")
+    private String address;              // VD: "TP. Hồ Chí Minh (Sẵn sàng Remote)"
+    private BigDecimal hourlyRate;       // VD: 30 ($/giờ)
+    private String availableHours;       // VD: "30-40 giờ / tuần"
+
+    @Builder.Default
+    private List<String> languages = new ArrayList<>(); // VD: ["Tiếng Việt (Bản xứ)", "Tiếng Anh (C1)"]
 
     // AI & Parsed CV Data
     private String cvUrl;
