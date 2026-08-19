@@ -11,7 +11,7 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity // Kích hoạt @PreAuthorize trên các endpoint
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Bean
@@ -21,7 +21,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/users/**").permitAll() // AI CŨNG CÓ THỂ XEM (GET)
+                        .requestMatchers(HttpMethod.GET, "/users/**", "/categories/**", "/jobs/**").permitAll()
                         .anyRequest().authenticated()
                 );
 

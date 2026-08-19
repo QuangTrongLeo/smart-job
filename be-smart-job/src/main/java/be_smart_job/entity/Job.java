@@ -1,6 +1,6 @@
 package be_smart_job.entity;
 
-import be_smart_job.enums.CurrencyType; // Import Enum CurrencyType
+import be_smart_job.enums.CurrencyType;
 import be_smart_job.enums.EmploymentType;
 import be_smart_job.enums.ExperienceLevel;
 import be_smart_job.enums.JobStatus;
@@ -30,8 +30,8 @@ public class Job extends BaseEntity {
     private String clientId;
 
     @Indexed
-    @Field("category_id")
-    private String categoryId;
+    @Field("category_ids")
+    private List<String> categoryIds; // Hỗ trợ 1 Job thuộc nhiều danh mục
 
     private String title;
     private String description;
