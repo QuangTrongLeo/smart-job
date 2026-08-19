@@ -87,9 +87,9 @@ function ClientJobManagement() {
       // Thiết lập giá trị mặc định cho form dựa trên Enum trả về
       setFormData((prev) => ({
         ...prev,
-        currency: fetchedCurrencies[0] || 'VND',
-        employmentType: fetchedEmpTypes[0] || 'FULL_TIME',
-        experienceLevel: fetchedExpLevels[0] || 'JUNIOR',
+        currency: prev.currency || fetchedCurrencies[0] || 'VND',
+        employmentType: prev.employmentType || fetchedEmpTypes[0] || 'FULL_TIME',
+        experienceLevel: prev.experienceLevel || fetchedExpLevels[0] || 'JUNIOR',
       }));
     } catch (error) {
       console.error('Lỗi lấy danh sách Enum:', error);
@@ -111,7 +111,8 @@ function ClientJobManagement() {
   const fetchCategories = async () => {
     try {
       const res = await categoryService.getAllCategories();
-      setCategories(res?.data?.data || res?.data || []);
+      const list = res?.data?.data || res?.data || [];
+      setCategories(list);
     } catch (error) {
       console.error('Lỗi lấy danh mục:', error);
     }
@@ -124,6 +125,7 @@ function ClientJobManagement() {
       currency: enums.currencies[0] || 'VND',
       employmentType: enums.employmentTypes[0] || 'FULL_TIME',
       experienceLevel: enums.experienceLevels[0] || 'JUNIOR',
+      categoryIds: categories.length > 0 ? [categories[0].id] : [],
     });
     setErrorMsg('');
     setShowModal(true);
@@ -136,9 +138,9 @@ function ClientJobManagement() {
       description: job.description || '',
       companyName: job.companyName || '',
       companyAddress: job.companyAddress || '',
-      experienceLevel: job.experienceLevel || enums.experienceLevels[0] || '',
+      experienceLevel: job.experienceLevel || enums.experienceLevels[0] || 'JUNIOR',
       requiredExperienceYears: job.requiredExperienceYears ?? 0,
-      employmentType: job.employmentType || enums.employmentTypes[0] || '',
+      employmentType: job.employmentType || enums.employmentTypes[0] || 'FULL_TIME',
       categoryIds: job.categoryIds || [],
       requiredSkills: Array.isArray(job.requiredSkills) ? job.requiredSkills.join(', ') : '',
       minBudget: job.minBudget ?? '',
@@ -170,14 +172,29 @@ function ClientJobManagement() {
     setSubmitting(true);
     setErrorMsg('');
 
+    // Kiểm tra danh mục ở FE
+    if (!formData.categoryIds || formData.categoryIds.length === 0) {
+      setErrorMsg('Vui lòng chọn ít nhất 1 danh mục công việc.');
+      setSubmitting(false);
+      return;
+    }
+
+    // Chuẩn hóa Payload đúng kiểu dữ liệu Backend yêu cầu
     const payload = {
-      ...formData,
-      requiredExperienceYears: Number(formData.requiredExperienceYears),
-      minBudget: formData.minBudget !== '' ? Number(formData.minBudget) : null,
-      maxBudget: formData.maxBudget !== '' ? Number(formData.maxBudget) : null,
+      title: formData.title,
+      description: formData.description,
+      companyName: formData.companyName || null,
+      companyAddress: formData.companyAddress || null,
+      experienceLevel: formData.experienceLevel || enums.experienceLevels[0] || 'JUNIOR',
+      requiredExperienceYears: Number(formData.requiredExperienceYears) || 0,
+      employmentType: formData.employmentType || enums.employmentTypes[0] || 'FULL_TIME',
+      categoryIds: formData.categoryIds,
       requiredSkills: formData.requiredSkills
         ? formData.requiredSkills.split(',').map((s) => s.trim()).filter(Boolean)
         : [],
+      minBudget: formData.minBudget !== '' && formData.minBudget !== null ? Number(formData.minBudget) : null,
+      maxBudget: formData.maxBudget !== '' && formData.maxBudget !== null ? Number(formData.maxBudget) : null,
+      currency: formData.currency || enums.currencies[0] || 'VND',
     };
 
     try {
@@ -189,8 +206,25 @@ function ClientJobManagement() {
       setShowModal(false);
       fetchMyJobs();
     } catch (error) {
-      console.error('Lỗi khi lưu bài đăng:', error);
-      setErrorMsg(error?.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại.');
+      console.error('Lỗi chi tiết khi lưu bài đăng:', error?.response);
+
+      // Trích xuất chi tiết thông báo lỗi từ Spring Boot
+      const resData = error?.response?.data;
+      let extractMsg = 'Có lỗi xảy ra, vui lòng thử lại.';
+
+      if (typeof resData === 'string') {
+        extractMsg = resData;
+      } else if (resData?.message) {
+        extractMsg = resData.message;
+      } else if (resData?.errors && Array.isArray(resData.errors)) {
+        extractMsg = resData.errors.map((err) => err.defaultMessage || err).join(', ');
+      } else if (resData?.error) {
+        extractMsg = resData.error;
+      } else if (error?.message) {
+        extractMsg = error.message;
+      }
+
+      setErrorMsg(extractMsg);
     } finally {
       setSubmitting(false);
     }
@@ -260,7 +294,8 @@ function ClientJobManagement() {
                     </td>
                     <td>
                       <span className={styles.budgetText}>
-                        {job.minBudget?.toLocaleString()} - {job.maxBudget?.toLocaleString()} {job.currency}
+                        {job.minBudget ? job.minBudget.toLocaleString() : '0'} -{' '}
+                        {job.maxBudget ? job.maxBudget.toLocaleString() : 'Thỏa thuận'} {job.currency}
                       </span>
                     </td>
                     <td>
@@ -349,11 +384,12 @@ function ClientJobManagement() {
                 </div>
 
                 <div>
-                  <label>Cấp độ kinh nghiệm</label>
+                  <label>Cấp độ kinh nghiệm *</label>
                   <select
                     name="experienceLevel"
                     value={formData.experienceLevel}
                     onChange={handleChange}
+                    required
                   >
                     {enums.experienceLevels.map((level) => (
                       <option key={level} value={level}>
@@ -375,11 +411,12 @@ function ClientJobManagement() {
                 </div>
 
                 <div>
-                  <label>Hình thức làm việc</label>
+                  <label>Hình thức làm việc *</label>
                   <select
                     name="employmentType"
                     value={formData.employmentType}
                     onChange={handleChange}
+                    required
                   >
                     {enums.employmentTypes.map((type) => (
                       <option key={type} value={type}>
@@ -390,7 +427,7 @@ function ClientJobManagement() {
                 </div>
 
                 <div>
-                  <label>Danh mục bài đăng * (Giữ Ctrl để chọn nhiều)</label>
+                  <label>Danh mục bài đăng * (Giữ Ctrl / Cmd để chọn nhiều)</label>
                   <select
                     multiple
                     name="categoryIds"

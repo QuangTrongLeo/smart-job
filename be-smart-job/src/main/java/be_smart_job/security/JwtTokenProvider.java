@@ -4,10 +4,10 @@ import be_smart_job.config.JwtConfig;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import javax.crypto.SecretKey;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
@@ -27,8 +27,8 @@ public class JwtTokenProvider {
         Date expiryDate = new Date(now.getTime() + jwtConfig.getExpiration());
 
         return Jwts.builder()
-                .subject(userId)
-                .claim("email", email)
+                .subject(email) // Đặt Email làm Subject để UserDetailsService tìm theo Email/Username
+                .claim("userId", userId)
                 .claim("role", roleName)
                 .issuedAt(now)
                 .expiration(expiryDate)
@@ -41,20 +41,31 @@ public class JwtTokenProvider {
         Date expiryDate = new Date(now.getTime() + jwtConfig.getExpiration() * 7);
 
         return Jwts.builder()
-                .subject(userId)
+                .subject(userId) // Refresh Token lưu UserId
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(getSigningKey())
                 .compact();
     }
 
+    // Lấy UserId từ Token (Dùng cho Refresh Token hoặc lấy UserId trực tiếp từ Claims)
     public String getUserIdFromToken(String token) {
-        Claims claims = Jwts.parser()
+        Claims claims = getClaimsFromToken(token);
+        String claimUserId = claims.get("userId", String.class);
+        return claimUserId != null ? claimUserId : claims.getSubject();
+    }
+
+    // Lấy Username / Email từ Token (Dùng cho JwtAuthenticationFilter)
+    public String getUsernameFromToken(String token) {
+        return getClaimsFromToken(token).getSubject();
+    }
+
+    private Claims getClaimsFromToken(String token) {
+        return Jwts.parser()
                 .verifyWith(getSigningKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
-        return claims.getSubject();
     }
 
     public boolean validateToken(String token) {

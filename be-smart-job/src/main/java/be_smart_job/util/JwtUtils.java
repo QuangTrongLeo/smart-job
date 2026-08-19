@@ -2,13 +2,13 @@ package be_smart_job.util;
 
 import be_smart_job.config.JwtConfig;
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Component
@@ -19,11 +19,12 @@ public class JwtUtils {
     private final JwtConfig jwtConfig;
 
     private SecretKey getSigningKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(jwtConfig.getSecret());
+        // Thống nhất dùng UTF_8 bytes giống JwtTokenProvider
+        byte[] keyBytes = jwtConfig.getSecret().getBytes(StandardCharsets.UTF_8);
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    // Tạo JWT Token từ Username/Email
+    // Tạo Token với subject là Email/Username
     public String generateToken(String username) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtConfig.getExpiration());
@@ -36,7 +37,7 @@ public class JwtUtils {
                 .compact();
     }
 
-    // Lấy Username từ Token
+    // Lấy Username/Email từ Token
     public String getUsernameFromToken(String token) {
         return Jwts.parser()
                 .verifyWith(getSigningKey())
@@ -62,6 +63,8 @@ public class JwtUtils {
             log.error("JWT token is unsupported: {}", e.getMessage());
         } catch (IllegalArgumentException e) {
             log.error("JWT claims string is empty: {}", e.getMessage());
+        } catch (Exception e) {
+            log.error("JWT validation error: {}", e.getMessage());
         }
         return false;
     }
