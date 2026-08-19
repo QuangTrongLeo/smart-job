@@ -17,7 +17,8 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**").permitAll() // Khớp với Controller @RequestMapping("/auth")
+                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/roles/**").permitAll()
                         .anyRequest().authenticated()
                 );
 
