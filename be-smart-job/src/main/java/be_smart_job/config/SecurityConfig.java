@@ -21,7 +21,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/users/my-profile", "/jobs/my-jobs", "/freelancers/me", "/favorites/**").authenticated()
+                        .requestMatchers("/users/my-profile", "/jobs/my-jobs", "/freelancers/me", "/favorites/**", "/chat/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/users/**", "/categories/**", "/jobs/**", "/enums/**", "/freelancers/**").permitAll()
                         .anyRequest().authenticated()
                 );
