@@ -1,185 +1,348 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { jobService, favoriteService } from '../../services';
 import styles from './JobDetail.module.scss';
 
+const DEFAULT_AVATAR =
+  'https://ui-avatars.com/api/?background=2563eb&color=fff&name=User';
+
 function JobDetail() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  const [job, setJob] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [isSaved, setIsSaved] = useState(false);
   const [hasApplied, setHasApplied] = useState(false);
+
+  useEffect(() => {
+    const fetchJobDetail = async () => {
+      setLoading(true);
+      try {
+        const response = await jobService.getJobById(id);
+        if (response && response.data) {
+          setJob(response.data);
+        }
+      } catch (error) {
+        console.error('Lỗi khi tải thông tin công việc:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchJobDetail();
+    }
+  }, [id]);
+
+  const formatSalary = (min, max, currency) => {
+    if (!min && !max) return 'Thỏa thuận';
+    const curr = currency || 'USD';
+    if (min && max) return `${min.toLocaleString()} - ${max.toLocaleString()} ${curr}`;
+    if (min) return `Từ ${min.toLocaleString()} ${curr}`;
+    return `Đến ${max.toLocaleString()} ${curr}`;
+  };
+
+  const formatDate = (instantString) => {
+    if (!instantString) return 'Mới đăng';
+    const date = new Date(instantString);
+    return date.toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+  };
 
   const handleApply = () => {
     setHasApplied(true);
     alert('Ứng tuyển thành công!');
   };
 
-  const toggleSave = () => {
-    setIsSaved(!isSaved);
+  const handleMessage = () => {
+    if (job?.client?.id) {
+      navigate(`/messages?user=${job.client.id}`);
+    } else {
+      navigate('/messages');
+    }
   };
+
+  const toggleSave = async () => {
+    if (!job?.id) return;
+    try {
+      const response = await favoriteService.toggleFavoriteJob(job.id);
+      setIsSaved(response?.data ?? !isSaved);
+    } catch (error) {
+      console.error('Lỗi khi lưu/bỏ yêu thích:', error);
+      setIsSaved(!isSaved);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className={styles.jobDetailContainer}>
+        <div style={{ textAlign: 'center', padding: '3rem' }}>
+          <p>Đang tải chi tiết công việc...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!job) {
+    return (
+      <div className={styles.jobDetailContainer}>
+        <div style={{ textAlign: 'center', padding: '3rem' }}>
+          <h2>Không tìm thấy công việc!</h2>
+          <button className={styles.btnPrimary} style={{ width: 'auto', margin: '1rem auto' }} onClick={() => navigate('/jobs')}>
+            Quay lại danh sách việc làm
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Thông tin client & fallback
+  const clientInfo = job.client || {};
+  const clientAvatar = clientInfo.avatarUrl || DEFAULT_AVATAR;
+  const clientName = `${clientInfo.firstName || ''} ${clientInfo.lastName || ''}`.trim() || clientInfo.username || 'Người tuyển dụng';
+  const companyName = job.companyName || clientInfo.companyName || clientName;
 
   return (
     <div className={styles.jobDetailContainer}>
-      {/* Main Content */}
       <main className={styles.mainLayout}>
-        
-        {/* Left Column: Job Details */}
+        {/* Cột trái: Chi tiết việc làm & Mô tả công ty */}
         <div className={styles.leftColumn}>
-          {/* Job Header Card */}
+          {/* Header Card */}
           <div className={styles.card}>
             <div className={styles.jobHeader}>
               <div className={styles.headerTop}>
-                <h1 className={styles.jobTitle}>
-                  Thiết kế UI/UX cho ứng dụng di động Fintech
-                </h1>
-                <span className={styles.categoryBadge}>
-                  Thiết kế
-                </span>
+                <h1 className={styles.jobTitle}>{job.title}</h1>
+                <div className={styles.categoryBadgeGroup}>
+                  {job.categories?.map((cat) => (
+                    <span key={cat.id} className={styles.categoryBadge}>
+                      {cat.name}
+                    </span>
+                  ))}
+                </div>
               </div>
+
               <div className={styles.metaInfo}>
                 <span className={styles.metaItem}>
-                  <span className="material-symbols-outlined">schedule</span> Đăng 2 giờ trước
+                  <i className="bi bi-clock-history"></i> Đăng ngày {formatDate(job.createdAt)}
                 </span>
                 <span className={styles.metaItem}>
-                  <span className="material-symbols-outlined">location_on</span> Từ xa (Việt Nam)
+                  <i className="bi bi-geo-alt"></i> {job.companyAddress || clientInfo.address || 'Toàn quốc'}
                 </span>
                 <span className={styles.metaItem}>
-                  <span className="material-symbols-outlined">work</span> Dự án ngắn hạn
+                  <i className="bi bi-briefcase"></i> {job.employmentType || 'Dự án'}
+                </span>
+                <span className={styles.metaItem}>
+                  <i className="bi bi-award"></i> {job.experienceLevel}{' '}
+                  {job.requiredExperienceYears ? `(${job.requiredExperienceYears} năm kinh nghiệm)` : ''}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Client Info Card */}
-          <div className={styles.clientCard}>
-            <div className={styles.avatar}>
-              <img 
-                alt="Logo công ty" 
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAzHAO0-vGqScjve64bFhXMKUOadq7CWhf4bejRI9FWGxk7DA01s7WEBUJc-sWLOfJOpjwdS_8bHR-jts1ssuqV0WHvX7CtKyG5leaY8CNi3OZ5t1-hVPUSeIp5vJ3PGajhh1SZTgLY6UwLh611UhRICCbSFAFanQvHMHvt0GpcHZtJtKfluRJjPlDidwbT15dMX2sKWOPCgL2VrXoehKi7IXPUbZ-pymLm9zxo9tAgmGFCZcyEN_jS"
-              />
-            </div>
-            <div className={styles.clientDetails}>
-              <span className={styles.clientName}>FinTech Innovators JSC</span>
-              <div className={styles.clientSub}>
-                <span className={styles.verified}>
-                  <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>star</span> 
-                  4.9 (120 đánh giá)
-                </span>
-                <span>•</span>
-                <span>Đã chi tiêu: $50k+</span>
-                <span>•</span>
-                <span className={styles.verified}>
-                  <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span> 
-                  Đã xác minh thanh toán
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Job Description */}
+          {/* Job Description Card */}
           <div className={styles.card}>
-            <h2 className={styles.sectionTitle}>
-              Mô tả công việc
-            </h2>
+            <h2 className={styles.sectionTitle}>Mô tả công việc</h2>
             <div className={styles.jobDescription}>
-              <p>
-                Chúng tôi đang tìm kiếm một UI/UX Designer có kinh nghiệm để thiết kế lại ứng dụng di động ví điện tử của chúng tôi. Ứng dụng hiện tại cần được nâng cấp về mặt thẩm mỹ và tối ưu hóa luồng người dùng để tăng tỷ lệ chuyển đổi.
-              </p>
-              <p><strong>Nhiệm vụ chính:</strong></p>
-              <ul>
-                <li>Nghiên cứu người dùng và phân tích đối thủ cạnh tranh trong mảng Fintech.</li>
-                <li>Thiết kế wireframes, mockups và prototypes tương tác cao trên Figma.</li>
-                <li>Cộng tác chặt chẽ với đội ngũ phát triển (Frontend & Backend) để đảm bảo tính khả thi của thiết kế.</li>
-                <li>Tạo và duy trì Design System cho sản phẩm.</li>
-              </ul>
+              <p>{job.description}</p>
             </div>
           </div>
 
-          {/* Skills Required */}
+          {/* Skills Required Card */}
+          {job.requiredSkills?.length > 0 && (
+            <div className={styles.card}>
+              <h2 className={styles.sectionTitle}>Kỹ năng cần có</h2>
+              <div className={styles.skillsList}>
+                {job.requiredSkills.map((skill, index) => (
+                  <span key={index} className={styles.skillTag}>
+                    #{skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Khối MỚI: Giới thiệu chi tiết về Nhà tuyển dụng */}
           <div className={styles.card}>
-            <h2 className={styles.sectionTitle}>
-              Kỹ năng cần có
-            </h2>
-            <div className={styles.skillsList}>
-              {['Figma', 'UI/UX Design', 'Fintech Experience', 'Prototyping', 'User Research'].map((skill, index) => (
-                <span key={index} className={styles.skillTag}>
-                  {skill}
-                </span>
-              ))}
+            <h2 className={styles.sectionTitle}>Về nhà tuyển dụng</h2>
+            <div className={styles.employerIntro}>
+              <p>
+                {clientInfo.bio ||
+                  clientInfo.companyDescription ||
+                  `${companyName} là đơn vị hoạt động chuyên nghiệp, cam kết cung cấp môi trường làm việc minh bạch và hợp tác lâu dài với các Chuyên viên/Freelancer.`}
+              </p>
             </div>
           </div>
         </div>
 
-        {/* Right Column: Sidebar Actions & Info */}
+        {/* Cột phải: Khối hành động, Thông tin nhà tuyển dụng & AI Match */}
         <div className={styles.rightColumn}>
           {/* Action Card */}
           <div className={styles.actionCard}>
             <div className={styles.priceInfo}>
               <div className={styles.priceRow}>
                 <span className={styles.label}>Ngân sách dự kiến</span>
-                <span className={`${styles.value} ${styles.priceHighlight}`}>$1,500 - $2,500</span>
+                <span className={`${styles.value} ${styles.priceHighlight}`}>
+                  {formatSalary(job.minBudget, job.maxBudget, job.currency)}
+                </span>
               </div>
               <div className={styles.priceRow}>
-                <span className={styles.label}>Loại giá</span>
-                <span className={styles.value}>Cố định theo dự án</span>
+                <span className={styles.label}>Hình thức</span>
+                <span className={styles.value}>{job.employmentType || 'Thỏa thuận'}</span>
               </div>
               <div className={styles.priceRow}>
-                <span className={styles.label}>Thời gian dự kiến</span>
-                <span className={styles.value}>1 - 2 tháng</span>
+                <span className={styles.label}>Trạng thái</span>
+                <span className={styles.value}>{job.status || 'Đang mở'}</span>
               </div>
             </div>
-            
+
             <div className={styles.buttonGroup}>
-              <button 
+              <button
                 onClick={handleApply}
                 disabled={hasApplied}
                 className={styles.btnPrimary}
               >
+                <i className="bi bi-send-fill"></i>
                 {hasApplied ? 'Đã ứng tuyển' : 'Ứng tuyển ngay'}
               </button>
-              
-              <button 
+
+              <button onClick={handleMessage} className={styles.btnMessage}>
+                <i className="bi bi-chat-dots-fill"></i>
+                Nhắn tin với người tuyển dụng
+              </button>
+
+              <button
                 onClick={toggleSave}
                 className={`${styles.btnSecondary} ${isSaved ? styles.saved : ''}`}
               >
-                <span className="material-symbols-outlined" style={{ fontVariationSettings: isSaved ? "'FILL' 1" : "'FILL' 0" }}>
-                  bookmark
-                </span> 
-                {isSaved ? 'Đã lưu việc' : 'Lưu việc'}
+                <i
+                  className={
+                    isSaved ? 'bi bi-heart-fill text-danger' : 'bi bi-heart'
+                  }
+                ></i>
+                {isSaved ? 'Đã yêu thích' : 'Yêu thích'}
               </button>
+            </div>
+          </div>
+
+          {/* Khối MỚI: Thẻ chi tiết Thông tin nhà tuyển dụng */}
+          <div className={styles.clientDetailCard}>
+            <div className={styles.clientHeader}>
+              <img
+                src={clientAvatar}
+                alt={companyName}
+                className={styles.clientAvatar}
+                onError={(e) => {
+                  e.target.src = DEFAULT_AVATAR;
+                }}
+              />
+              <div className={styles.clientTitleGroup}>
+                <h3 className={styles.clientTitle}>{companyName}</h3>
+                <p className={styles.clientOwner}>Người đại diện: {clientName}</p>
+                <div className={styles.ratingBadge}>
+                  <i className="bi bi-star-fill text-warning"></i>
+                  <span>{clientInfo.rating || '4.9'}</span>
+                  <small>({clientInfo.totalReviews || '12'} đánh giá)</small>
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.clientStatsGrid}>
+              <div className={styles.statBox}>
+                <i className="bi bi-patch-check-fill text-success"></i>
+                <div>
+                  <span className={styles.statLabel}>Thanh toán</span>
+                  <strong className={styles.statValue}>Đã xác minh</strong>
+                </div>
+              </div>
+
+              <div className={styles.statBox}>
+                <i className="bi bi-briefcase-fill"></i>
+                <div>
+                  <span className={styles.statLabel}>Việc đã đăng</span>
+                  <strong className={styles.statValue}>{clientInfo.postedJobsCount || '18'} việc</strong>
+                </div>
+              </div>
+
+              <div className={styles.statBox}>
+                <i className="bi bi-person-check-fill"></i>
+                <div>
+                  <span className={styles.statLabel}>Tỷ lệ thuê</span>
+                  <strong className={styles.statValue}>{clientInfo.hireRate || '85%'}</strong>
+                </div>
+              </div>
+
+              <div className={styles.statBox}>
+                <i className="bi bi-calendar-check"></i>
+                <div>
+                  <span className={styles.statLabel}>Tham gia</span>
+                  <strong className={styles.statValue}>{formatDate(clientInfo.createdAt || '2023-01-01')}</strong>
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.clientMetaList}>
+              <div className={styles.metaRow}>
+                <i className="bi bi-geo-alt-fill"></i>
+                <span>{clientInfo.location || job.companyAddress || 'TP. Hồ Chí Minh, Việt Nam'}</span>
+              </div>
+              {clientInfo.website && (
+                <div className={styles.metaRow}>
+                  <i className="bi bi-globe"></i>
+                  <a href={clientInfo.website} target="_blank" rel="noopener noreferrer">
+                    {clientInfo.website}
+                  </a>
+                </div>
+              )}
+              <div className={styles.metaRow}>
+                <i className="bi bi-building"></i>
+                <span>Quy mô: {clientInfo.companySize || '10-50 nhân sự'}</span>
+              </div>
             </div>
           </div>
 
           {/* AI Match Score Component */}
           <div className={styles.aiMatchCard}>
             <div className={styles.watermarkIcon}>
-              <span className="material-symbols-outlined">auto_awesome</span>
+              <i className="bi bi-stars"></i>
             </div>
             <div className={styles.aiContent}>
               <div className={styles.aiHeader}>
-                <span className="material-symbols-outlined">psychiatry</span>
+                <i className="bi bi-cpu"></i>
                 <h3>AI Match Score</h3>
               </div>
               <div className={styles.scoreDisplay}>
                 <span className={styles.scoreNumber}>92%</span>
                 <span className={styles.scoreLabel}>Độ phù hợp</span>
               </div>
-              
-              {/* Progress Bar */}
+
               <div className={styles.progressBarTrack}>
-                <div className={styles.progressBarFill} style={{ width: '92%' }}></div>
+                <div
+                  className={styles.progressBarFill}
+                  style={{ width: '92%' }}
+                ></div>
               </div>
-              
+
               <div className={styles.aiDetails}>
                 <p className={styles.aiPoint}>
-                  <span className={`material-symbols-outlined ${styles.iconCheck}`}>check_circle</span>
-                  <span><strong>Kỹ năng khớp cao:</strong> Bạn có 4/5 kỹ năng yêu cầu (Figma, UI/UX, Prototyping).</span>
+                  <i className={`bi bi-check-circle-fill ${styles.iconCheck}`}></i>
+                  <span>
+                    <strong>Kỹ năng khớp cao:</strong> Khớp hầu hết các kỹ năng bắt buộc.
+                  </span>
                 </p>
                 <p className={styles.aiPoint}>
-                  <span className={`material-symbols-outlined ${styles.iconCheck}`}>check_circle</span>
-                  <span><strong>Kinh nghiệm:</strong> Dự án "Ví điện tử XYZ" trong hồ sơ của bạn rất tương đồng.</span>
+                  <i className={`bi bi-check-circle-fill ${styles.iconCheck}`}></i>
+                  <span>
+                    <strong>Kinh nghiệm:</strong> Phù hợp với mức {job.experienceLevel}.
+                  </span>
                 </p>
               </div>
             </div>
           </div>
         </div>
-
       </main>
     </div>
   );
