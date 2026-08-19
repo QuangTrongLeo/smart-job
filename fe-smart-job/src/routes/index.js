@@ -31,7 +31,7 @@ const publishRoutes = [
   { path: config.routes.verify, component: Verify },
   { path: config.routes.forgot_password, component: ForgotPassword },
   { path: config.routes.freelancers, component: Freelancers },
-  { path: config.routes.freelancer, component: FreelancerDetail },
+  { path: '/freelancer/:id', component: FreelancerDetail },
   { path: config.routes.messages, component: Messages },
 ];
 
