@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { authService } from '../../services/authService';
 import styles from './Register.module.scss';
+import config from '../../config';
 
 function Register() {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     role: '',
     firstName: '',
@@ -14,6 +19,8 @@ function Register() {
   });
 
   const [roleError, setRoleError] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -28,8 +35,9 @@ function Register() {
     setRoleError(false);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorMessage('');
 
     if (!formData.role) {
       setRoleError(true);
@@ -37,12 +45,44 @@ function Register() {
     }
 
     if (formData.password !== formData.confirmPassword) {
-      alert('Mật khẩu và Nhập lại mật khẩu không khớp nhau!');
+      setErrorMessage('Mật khẩu và Nhập lại mật khẩu không khớp nhau!');
       return;
     }
 
-    console.log('Thông tin đăng ký:', formData);
-    alert(`Đăng ký tài khoản thành công với vai trò: ${formData.role.toUpperCase()}`);
+    if (!formData.terms) {
+      setErrorMessage('Bạn cần đồng ý với Điều khoản dịch vụ và Chính sách bảo mật!');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Map dữ liệu theo DTO RegisterRequest của Backend
+      const payload = {
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        roleType: formData.role.toUpperCase(), // 'client' -> 'CLIENT', 'freelancer' -> 'FREELANCER'
+      };
+
+      const response = await authService.register(payload);
+
+      // Lấy thông báo từ ApiResponse của Backend
+      alert(response?.data?.message || 'Đăng ký tài khoản thành công!');
+      
+      // Chuyển hướng sang trang đăng nhập
+      navigate('/login');
+    } catch (error) {
+      console.error('Lỗi đăng ký:', error);
+      // Hiển thị lỗi từ Backend trả về (ví dụ: Email đã tồn tại)
+      const apiMessage =
+        error.response?.data?.message || 'Đã xảy ra lỗi khi đăng ký. Vui lòng thử lại!';
+      setErrorMessage(apiMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -95,6 +135,12 @@ function Register() {
           </div>
           <h2 className={styles.formTitle}>Tạo tài khoản mới</h2>
           <p className={styles.formSubtitle}>Vui lòng chọn vai trò và điền thông tin đăng ký</p>
+
+          {errorMessage && (
+            <div className="alert alert-danger mb-3" role="alert">
+              {errorMessage}
+            </div>
+          )}
 
           <form className={styles.form} onSubmit={handleSubmit}>
             {/* Role Selection */}
@@ -261,14 +307,20 @@ function Register() {
             </div>
 
             {/* Submit Button */}
-            <button type="submit" className={styles.submitBtn}>
-              Đăng ký
-              <i className="bi bi-arrow-right ms-2"></i>
+            <button type="submit" className={styles.submitBtn} disabled={loading}>
+              {loading ? (
+                <span>Đang xử lý...</span>
+              ) : (
+                <>
+                  Đăng ký
+                  <i className="bi bi-arrow-right ms-2"></i>
+                </>
+              )}
             </button>
           </form>
 
           <div className={styles.footerText}>
-            Đã có tài khoản? <a href="#login">Đăng nhập</a>
+            Đã có tài khoản? <Link to={config.routes.login}>Đăng nhập</Link>
           </div>
         </div>
       </main>

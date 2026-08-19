@@ -1,14 +1,44 @@
 import React, { useState } from 'react';
-import styles from './Login.module.scss';
+import { useNavigate, Link } from 'react-router-dom';
+import { authService } from '~/services/authService';
+import { useAuth } from '~/context/AuthContext'; // 1. Import useAuth
 import config from '~/config';
+import styles from './Login.module.scss';
 
 function Login() {
+  const navigate = useNavigate();
+  const { login } = useAuth(); // 2. Lấy hàm login từ AuthContext
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Form Submitted:', { email, password });
+    setErrorMessage('');
+    setLoading(true);
+
+    try {
+      // Gọi API Login từ authService
+      const res = await authService.login({ email, password });
+      
+      // Lấy dữ liệu từ ApiResponse<AuthResponse>
+      const authData = res?.data?.data || res?.data;
+
+      // 3. Gọi hàm login() của Context (sẽ lưu Cookie và cập nhật State user tức thì)
+      login(authData);
+
+      // Chuyển hướng về trang chủ
+      navigate('/');
+    } catch (error) {
+      console.error('Lỗi đăng nhập:', error);
+      const apiMessage =
+        error.response?.data?.message || 'Tài khoản hoặc mật khẩu không chính xác';
+      setErrorMessage(apiMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleGoogleLogin = () => {
@@ -24,6 +54,13 @@ function Login() {
           <h1 className={`${styles.fwBlack} h4 tracking-tight text-primary m-0`}>SMART JOB</h1>
           <h2 className="small text-secondary mt-1 mb-0">Chào mừng trở lại</h2>
         </div>
+
+        {/* Inform Error Message */}
+        {errorMessage && (
+          <div className="alert alert-danger py-2 small mb-3" role="alert">
+            {errorMessage}
+          </div>
+        )}
 
         {/* Form đăng nhập */}
         <form onSubmit={handleSubmit} className="d-flex flex-column gap-2.5">
@@ -46,9 +83,9 @@ function Login() {
           <div>
             <div className="d-flex justify-content-between align-items-center mb-1">
               <label className="form-label small fw-semibold m-0" htmlFor="password">Mật khẩu</label>
-              <a className="small text-primary text-decoration-none" href={config.routes.forgot_password}>
+              <Link className="small text-primary text-decoration-none" to={config.routes.forgot_password || '#'}>
                 Quên mật khẩu?
-              </a>
+              </Link>
             </div>
             <input 
               type="password" 
@@ -62,8 +99,12 @@ function Login() {
           </div>
 
           {/* Nút Submit */}
-          <button type="submit" className="btn btn-primary py-2 w-100 mt-2 fw-semibold shadow-sm">
-            Đăng nhập
+          <button 
+            type="submit" 
+            className="btn btn-primary py-2 w-100 mt-2 fw-semibold shadow-sm"
+            disabled={loading}
+          >
+            {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
           </button>
         </form>
 
@@ -93,7 +134,9 @@ function Login() {
         <div className="mt-3 text-center">
           <p className="small text-muted m-0">
             Chưa có tài khoản?{' '}
-            <a className="text-primary text-decoration-none fw-semibold" href="#register">Đăng ký ngay</a>
+            <Link className="text-primary text-decoration-none fw-semibold" to="/register">
+              Đăng ký ngay
+            </Link>
           </p>
         </div>
 
