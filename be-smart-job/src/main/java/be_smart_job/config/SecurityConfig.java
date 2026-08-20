@@ -38,6 +38,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/auth/**").permitAll()
+                        // Cho phép truy cập công khai Chatbot (nếu muốn), loại trừ /ai/parse-job
+                        .requestMatchers(HttpMethod.POST, "/ai/chatbot").permitAll()
                         .requestMatchers(
                                 "/users/my-profile",
                                 "/jobs/my-jobs",
@@ -45,7 +47,6 @@ public class SecurityConfig {
                                 "/favorites/**",
                                 "/chat/**"
                         ).authenticated()
-                        .requestMatchers(HttpMethod.POST, "/ai/**").permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/users/**",
                                 "/categories/**",
