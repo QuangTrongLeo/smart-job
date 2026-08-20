@@ -149,6 +149,65 @@ $text-dark: #212529;
     word-break: break-word;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   }
+
+  .messageText {
+    white-space: pre-wrap;
+  }
+
+  .errorBubble {
+    color: #b42318;
+    border-color: #fecdca;
+    background-color: #fff1f0;
+  }
+
+  .sentFile {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-bottom: 0.35rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .recommendedJobs {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+  }
+
+  .jobCard {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    width: 100%;
+    padding: 0.6rem;
+    border: 1px solid $border-color;
+    border-radius: 8px;
+    background-color: #f8fafc;
+    color: $text-dark;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+
+    &:hover,
+    &:focus-visible {
+      border-color: $primary-color;
+      background-color: #eff6ff;
+      box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.12);
+      outline: none;
+    }
+
+    strong {
+      font-size: 0.8rem;
+    }
+
+    span,
+    small {
+      color: #64748b;
+      font-size: 0.72rem;
+    }
+  }
 }
 
 // Footer ô nhập tin nhắn
@@ -158,6 +217,20 @@ $text-dark: #212529;
   background-color: #ffffff;
   display: flex;
   gap: 0.5rem;
+
+  .fileInput {
+    display: none;
+  }
+
+  .btnAttach {
+    flex: 0 0 auto;
+    width: 36px;
+    border: 1px solid $border-color;
+    border-radius: 8px;
+    background-color: #ffffff;
+    color: $primary-color;
+    cursor: pointer;
+  }
 
   input {
     flex: 1;
@@ -170,6 +243,16 @@ $text-dark: #212529;
     &:focus {
       border-color: $primary-color;
     }
+  }
+
+  .fileName {
+    align-self: center;
+    max-width: 100px;
+    overflow: hidden;
+    color: #64748b;
+    font-size: 0.7rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .btnSend {

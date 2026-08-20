@@ -66,7 +66,11 @@ function Header() {
               <i className="bi bi-bell"></i>
             </button>
 
-            <button className={styles.iconBtn} title="Tin nhắn">
+            <button
+              className={styles.iconBtn}
+              title="Tin nhắn"
+              onClick={() => navigate(config.routes.messages)}
+            >
               <i className="bi bi-chat-dots"></i>
             </button>
 

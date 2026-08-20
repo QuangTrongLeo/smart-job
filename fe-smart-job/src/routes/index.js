@@ -32,17 +32,18 @@ const publishRoutes = [
   { path: config.routes.forgot_password, component: ForgotPassword },
   { path: config.routes.freelancers, component: Freelancers },
   { path: '/freelancer/:id', component: FreelancerDetail },
-  { path: config.routes.messages, component: Messages },
 ];
 
 const freelancerRoutes = [
 //   { path: '/freelancer/dashboard', component: FreelancerDashboard },
 //   { path: '/freelancer/my-jobs', component: MyJobs },
+  { path: config.routes.messages, component: Messages },
   { path: config.routes.favorite_jobs, component: FavoriteJobs },
   { path: config.routes.manage_freelancer, component: FreelancerProfileManager },
 ];
 
 const clientRoutes = [
+  { path: config.routes.messages, component: Messages },
   { path: config.routes.manage_jobs, component: ClientJobManagement },
   { path: config.routes.favorite_freelancers, component: FavoriteFreelancers },
 ];

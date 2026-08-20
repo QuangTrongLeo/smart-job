@@ -6,3 +6,4 @@ export * from './freelancerService';
 export * from './jobService';
 export * from './chatService';
 export * from './favoriteService';
+export * from './aiService';
