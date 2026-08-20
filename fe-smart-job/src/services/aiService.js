@@ -11,4 +11,10 @@ export const aiService = {
         'Content-Type': 'multipart/form-data',
       },
     }),
+
+  /**
+   * Bóc tách và chuẩn hóa mô tả công việc
+   * @param {Object} data - Dữ liệu JobParseReq
+   */
+  parseJob: (data) => axiosClient.post('/ai/parse-job', data),
 };

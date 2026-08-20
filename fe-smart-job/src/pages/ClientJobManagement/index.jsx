@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { jobService, categoryService, enumService } from '~/services';
+import { jobService, categoryService, enumService, aiService } from '~/services';
 import styles from './ClientJobManagement.module.scss';
 
 const INITIAL_FORM_STATE = {
@@ -55,6 +55,8 @@ function ClientJobManagement() {
 
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [parsingAi, setParsingAi] = useState(false);
+  const [aiSuccessMsg, setAiSuccessMsg] = useState('');
 
   // Modal & Form States
   const [showModal, setShowModal] = useState(false);
@@ -154,6 +156,54 @@ function ClientJobManagement() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name === 'description') {
+      setAiSuccessMsg('');
+    }
+  };
+
+  const handleAiParseJob = async () => {
+    if (!formData.description.trim()) {
+      setErrorMsg('Vui lòng nhập mô tả công việc thô để AI phân tích!');
+      setAiSuccessMsg('');
+      return;
+    }
+
+    setParsingAi(true);
+    setErrorMsg('');
+    setAiSuccessMsg('');
+
+    try {
+      const response = await aiService.parseJob({
+        title: formData.title,
+        description: formData.description,
+      });
+      const parsedData = response?.data || {};
+      const parsedSkills = Array.isArray(parsedData.requiredSkills)
+        ? parsedData.requiredSkills.join(', ')
+        : formData.requiredSkills;
+      const validExperienceLevel = enums.experienceLevels.includes(parsedData.experienceLevel)
+        ? parsedData.experienceLevel
+        : formData.experienceLevel;
+      const validEmploymentType = enums.employmentTypes.includes(parsedData.employmentType)
+        ? parsedData.employmentType
+        : formData.employmentType;
+
+      setFormData((prev) => ({
+        ...prev,
+        description: parsedData.aiParsedDesc || prev.description,
+        requiredSkills: parsedSkills,
+        experienceLevel: validExperienceLevel,
+        requiredExperienceYears: parsedData.requiredExperienceYears ?? prev.requiredExperienceYears,
+        employmentType: validEmploymentType,
+      }));
+      setAiSuccessMsg('AI đã phân tích và tự động điền thông tin thành công.');
+    } catch (error) {
+      console.error('Lỗi khi AI phân tích bài đăng:', error);
+      const responseData = error?.response?.data;
+      setErrorMsg(responseData?.msg || responseData?.message || 'AI không thể phân tích mô tả công việc. Vui lòng thử lại.');
+    } finally {
+      setParsingAi(false);
+    }
   };
 
   const handleCategoryChange = (e) => {
@@ -350,6 +400,24 @@ function ClientJobManagement() {
             <form onSubmit={handleSubmit} className={styles.modalBody}>
               <div className={styles.formGrid}>
                 <div className={styles.fullWidth}>
+                  <div className={styles.aiAssistBox}>
+                    <div>
+                      <strong>✨ AI tự động phân tích thông tin tuyển dụng</strong>
+                      <p>Nhập tiêu đề và mô tả công việc, sau đó nhấn nút AI. Hệ thống sẽ tự động chọn cấp độ, số năm kinh nghiệm, hình thức làm việc, kỹ năng cần có và chuẩn hóa lại mô tả.</p>
+                    </div>
+                    <button
+                      type="button"
+                      className={styles.aiButton}
+                      onClick={handleAiParseJob}
+                      disabled={parsingAi || !formData.title.trim() || !formData.description.trim()}
+                    >
+                      {parsingAi ? 'Đang tự động điền...' : '✨ Phân tích & tự động điền'}
+                    </button>
+                  </div>
+                  {aiSuccessMsg && <div className={styles.aiSuccessMsg}>{aiSuccessMsg}</div>}
+                </div>
+
+                <div className={styles.fullWidth}>
                   <label>Tiêu đề công việc *</label>
                   <input
                     type="text"
@@ -359,6 +427,18 @@ function ClientJobManagement() {
                     required
                     placeholder="Ví dụ: Senior Java Developer"
                   />
+                </div>
+
+                <div className={styles.fullWidth}>
+                  <label>Mô tả công việc *</label>
+                  <textarea
+                    name="description"
+                    rows="4"
+                    value={formData.description}
+                    onChange={handleChange}
+                    required
+                    placeholder="Nhập yêu cầu, trách nhiệm, kỹ năng và thông tin công việc..."
+                  ></textarea>
                 </div>
 
                 <div>
@@ -486,18 +566,6 @@ function ClientJobManagement() {
                     onChange={handleChange}
                     placeholder="Java, Spring Boot, MongoDB, React"
                   />
-                </div>
-
-                <div className={styles.fullWidth}>
-                  <label>Mô tả công việc *</label>
-                  <textarea
-                    name="description"
-                    rows="4"
-                    value={formData.description}
-                    onChange={handleChange}
-                    required
-                    placeholder="Mô tả chi tiết quyền lợi và trách nhiệm công việc..."
-                  ></textarea>
                 </div>
               </div>
 
