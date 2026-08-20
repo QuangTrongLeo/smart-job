@@ -17,4 +17,18 @@ export const aiService = {
    * @param {Object} data - Dữ liệu JobParseReq
    */
   parseJob: (data) => axiosClient.post('/ai/parse-job', data),
+
+  /**
+   * Bóc tách hồ sơ CV bằng AI
+   * @param {File} file - File CV cần phân tích
+   */
+  parseCv: (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return axiosClient.post('/ai/parse-cv', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
 };

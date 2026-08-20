@@ -27,6 +27,51 @@ $radius: 12px;
   color: $text-muted;
 }
 
+.notification {
+  position: fixed;
+  z-index: 1100;
+  top: 24px;
+  right: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(420px, calc(100vw - 32px));
+  padding: 14px 16px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.16);
+  font-size: 14px;
+  line-height: 1.4;
+
+  > i { font-size: 18px; }
+
+  span { flex: 1; }
+
+  button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    padding: 4px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+  }
+}
+
+.notificationSuccess {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.notificationError {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
 /* Header Card chứa thông tin User */
 .headerCard {
   background: $card-bg;
@@ -132,6 +177,177 @@ $radius: 12px;
     color: $text-muted;
     margin-bottom: 20px;
   }
+}
+
+.aiUploadButton {
+  @extend .btnPrimary;
+  margin-top: 16px;
+  cursor: pointer;
+
+  input {
+    display: none;
+  }
+}
+
+.aiUploadDisabled {
+  opacity: 0.7;
+  cursor: wait;
+
+  i {
+    animation: spin 1s linear infinite;
+  }
+}
+
+.aiBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  border: 1px solid #bfdbfe;
+  border-radius: $radius;
+  background: #eff6ff;
+
+  strong { font-size: 15px; }
+  p { margin: 4px 0 0; color: $text-muted; font-size: 14px; }
+
+  .aiUploadButton { margin-top: 0; flex-shrink: 0; }
+}
+
+.modalBackdrop {
+  position: fixed;
+  z-index: 1050;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(15, 23, 42, 0.62);
+}
+
+.aiModal {
+  width: min(720px, 100%);
+  max-height: min(840px, 92vh);
+  overflow: hidden;
+  background: $card-bg;
+  border-radius: $radius;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
+  display: flex;
+  flex-direction: column;
+}
+
+.modalHeader, .modalActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px;
+}
+
+.modalHeader { border-bottom: 1px solid $border-color; }
+
+.modalHeader h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.modalHeader p { margin: 4px 0 0; color: $text-muted; font-size: 14px; }
+
+.modalClose {
+  border: 0;
+  background: transparent;
+  color: $text-muted;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.selectAll {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 24px 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.aiPreview {
+  overflow-y: auto;
+  padding: 8px 24px 20px;
+}
+
+.previewSection {
+  display: block;
+  padding: 14px 0;
+  border-bottom: 1px solid $border-color;
+}
+
+.previewHeading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.previewValue {
+  display: block;
+  color: $text-muted;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.previewTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: $text-muted;
+}
+
+.previewTag {
+  padding: 4px 9px;
+  border-radius: 16px;
+  background: #eff6ff;
+  color: $primary;
+  font-size: 13px;
+}
+
+.previewExperiences { display: grid; gap: 8px; }
+
+.previewExperience {
+  display: grid;
+  gap: 3px;
+  padding: 10px 12px;
+  border: 1px solid $border-color;
+  border-radius: 8px;
+
+  span, small, p { color: $text-muted; }
+  small, p { font-size: 13px; }
+  p { margin: 4px 0 0; line-height: 1.45; }
+}
+
+.modalActions {
+  justify-content: flex-end;
+  border-top: 1px solid $border-color;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 576px) {
+  .notification {
+    top: 16px;
+    right: 16px;
+  }
+
+  .aiBanner, .modalActions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .aiBanner .aiUploadButton, .modalActions button { justify-content: center; }
+  .modalHeader, .selectAll, .aiPreview { padding-left: 16px; padding-right: 16px; }
 }
 
 /* Button Styles */

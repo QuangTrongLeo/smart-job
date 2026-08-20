@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { userService, freelancerService } from '../../services';
+import { userService, freelancerService, aiService } from '../../services';
 import styles from './FreelancerProfileManager.module.scss';
 
 const DEFAULT_AVATAR = 'https://ui-avatars.com/api/?background=2563eb&color=fff&name=User';
@@ -11,6 +11,14 @@ const initialForm = {
 };
 
 const initialExp = { title: '', company: '', startDate: '', endDate: '', isCurrent: false, description: '' };
+const initialSelectedFields = {
+  title: true,
+  bio: true,
+  yearsOfExperience: true,
+  skills: true,
+  experiences: true,
+  languages: true,
+};
 
 function FreelancerProfileManager() {
   const [userData, setUserData] = useState(null);
@@ -22,10 +30,22 @@ function FreelancerProfileManager() {
   const [formData, setFormData] = useState(initialForm);
   const [expForm, setExpForm] = useState(initialExp);
   const [tempInputs, setTempInputs] = useState({ skill: '', lang: '', portfolio: '' });
+  const [parsingCv, setParsingCv] = useState(false);
+  const [showAiModal, setShowAiModal] = useState(false);
+  const [parsedData, setParsedData] = useState(null);
+  const [selectedFields, setSelectedFields] = useState(initialSelectedFields);
+  const [notification, setNotification] = useState(null);
 
   useEffect(() => {
     fetchInitialData();
   }, []);
+
+  useEffect(() => {
+    if (!notification) return undefined;
+
+    const timeoutId = window.setTimeout(() => setNotification(null), 4000);
+    return () => window.clearTimeout(timeoutId);
+  }, [notification]);
 
   const fetchInitialData = async () => {
     setLoading(true);
@@ -70,6 +90,85 @@ function FreelancerProfileManager() {
     setFormData((prev) => ({ ...prev, [field]: prev[field].filter((_, i) => i !== index) }));
   };
 
+  const handleCvParse = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    setParsingCv(true);
+    try {
+      const response = await aiService.parseCv(file);
+      const data = response?.data?.data || response?.data;
+      setParsedData({
+        ...data,
+        skills: Array.isArray(data?.skills) ? data.skills : [],
+        languages: Array.isArray(data?.languages) ? data.languages : [],
+        experiences: Array.isArray(data?.experiences) ? data.experiences : [],
+      });
+      setSelectedFields(initialSelectedFields);
+      setShowAiModal(true);
+    } catch (error) {
+      setNotification({ type: 'error', message: 'Không thể bóc tách CV. Vui lòng thử lại.' });
+    } finally {
+      setParsingCv(false);
+    }
+  };
+
+  const closeAiModal = () => {
+    setShowAiModal(false);
+    setParsedData(null);
+    setSelectedFields(initialSelectedFields);
+  };
+
+  const toggleAllFields = (checked) => {
+    setSelectedFields(Object.keys(initialSelectedFields).reduce((fields, field) => ({
+      ...fields,
+      [field]: checked,
+    }), {}));
+  };
+
+  const applyParsedData = () => {
+    setFormData((prev) => {
+      const nextData = { ...prev };
+
+      ['title', 'bio', 'yearsOfExperience'].forEach((field) => {
+        if (selectedFields[field] && parsedData?.[field] !== undefined) nextData[field] = parsedData[field];
+      });
+
+      ['skills', 'languages'].forEach((field) => {
+        if (selectedFields[field]) {
+          nextData[field] = [...new Set([...(prev[field] || []), ...(parsedData?.[field] || [])])];
+        }
+      });
+
+      if (selectedFields.experiences) {
+        const existingExperiences = prev.experiences || [];
+        const parsedExperiences = parsedData?.experiences || [];
+        nextData.experiences = [...existingExperiences];
+        parsedExperiences.forEach((experience) => {
+          const isDuplicate = existingExperiences.some((current) => (
+            current.title === experience.title
+            && current.company === experience.company
+            && current.startDate === experience.startDate
+          ));
+          if (!isDuplicate) nextData.experiences.push(experience);
+        });
+      }
+
+      return nextData;
+    });
+    setIsEditing(true);
+    closeAiModal();
+  };
+
+  const renderCvUpload = () => (
+    <label className={`${styles.aiUploadButton} ${parsingCv ? styles.aiUploadDisabled : ''}`}>
+      <i className={parsingCv ? 'bi bi-arrow-repeat' : 'bi bi-stars'}></i>
+      {parsingCv ? 'Đang bóc tách CV...' : 'Nhập tự động từ CV'}
+      <input type="file" accept=".pdf,.doc,.docx" onChange={handleCvParse} disabled={parsingCv} />
+    </label>
+  );
+
   // Kinh nghiệm làm việc
   const handleAddExperience = () => {
     if (expForm.title && expForm.company) {
@@ -84,12 +183,15 @@ function FreelancerProfileManager() {
     try {
       const action = hasProfile ? freelancerService.updateMyProfile : freelancerService.createMyProfile;
       await action(formData);
-      alert(`${hasProfile ? 'Cập nhật' : 'Tạo'} hồ sơ thành công!`);
+      setNotification({
+        type: 'success',
+        message: `${hasProfile ? 'Cập nhật' : 'Tạo'} hồ sơ thành công!`,
+      });
       setHasProfile(true);
       setIsEditing(false);
       fetchInitialData();
     } catch (error) {
-      alert('Có lỗi xảy ra khi lưu hồ sơ.');
+      setNotification({ type: 'error', message: 'Có lỗi xảy ra khi lưu hồ sơ.' });
     }
   };
 
@@ -97,12 +199,13 @@ function FreelancerProfileManager() {
     if (window.confirm('Bạn có chắc muốn xóa hồ sơ Freelancer này?')) {
       try {
         await freelancerService.deleteMyProfile();
-        alert('Xóa hồ sơ thành công.');
+        setNotification({ type: 'success', message: 'Xóa hồ sơ thành công.' });
         setProfile(null);
         setHasProfile(false);
         setIsEditing(false);
       } catch (error) {
         console.error('Lỗi khi xóa:', error);
+        setNotification({ type: 'error', message: 'Có lỗi xảy ra khi xóa hồ sơ.' });
       }
     }
   };
@@ -113,6 +216,15 @@ function FreelancerProfileManager() {
 
   return (
     <div className={styles.profileContainer}>
+      {notification && (
+        <div className={`${styles.notification} ${styles[`notification${notification.type === 'success' ? 'Success' : 'Error'}`]}`} role="alert">
+          <i className={`bi ${notification.type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill'}`}></i>
+          <span>{notification.message}</span>
+          <button type="button" onClick={() => setNotification(null)} aria-label="Đóng thông báo">
+            <i className="bi bi-x-lg"></i>
+          </button>
+        </div>
+      )}
       {/* Header Info từ UserResponse */}
       <div className={styles.headerCard}>
         <div className={styles.userInfoGroup}>
@@ -146,10 +258,18 @@ function FreelancerProfileManager() {
           <h3>Bạn chưa tạo hồ sơ Freelancer</h3>
           <p>Tạo hồ sơ cá nhân ngay để bắt đầu ứng tuyển các công việc phù hợp.</p>
           <button className={styles.btnPrimary} onClick={() => setIsEditing(true)}>Tạo hồ sơ ngay</button>
+          {renderCvUpload()}
         </div>
       ) : isEditing ? (
         /* Edit Form */
         <form onSubmit={handleSubmit} className={styles.formLayout}>
+          <div className={styles.aiBanner}>
+            <div>
+              <strong>Tiết kiệm thời gian nhập liệu</strong>
+              <p>Tải CV để AI gợi ý thông tin hồ sơ cho bạn.</p>
+            </div>
+            {renderCvUpload()}
+          </div>
           <div className={styles.card}>
             <h3>Thông tin chung</h3>
             <div className={styles.formGroup}>
@@ -369,6 +489,81 @@ function FreelancerProfileManager() {
                   <i className="bi bi-file-earmark-pdf"></i> Xem CV cá nhân
                 </a>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showAiModal && parsedData && (
+        <div className={styles.modalBackdrop} role="presentation" onClick={closeAiModal}>
+          <div className={styles.aiModal} role="dialog" aria-modal="true" aria-labelledby="ai-modal-title" onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <div>
+                <h2 id="ai-modal-title">Xác nhận dữ liệu bóc tách từ CV</h2>
+                <p>Chọn những thông tin bạn muốn áp dụng vào hồ sơ.</p>
+              </div>
+              <button type="button" className={styles.modalClose} onClick={closeAiModal} aria-label="Đóng">
+                <i className="bi bi-x-lg"></i>
+              </button>
+            </div>
+
+            <label className={styles.selectAll}>
+              <input
+                type="checkbox"
+                checked={Object.values(selectedFields).every(Boolean)}
+                onChange={(e) => toggleAllFields(e.target.checked)}
+              />
+              Chọn tất cả / Bỏ chọn tất cả
+            </label>
+
+            <div className={styles.aiPreview}>
+              {[
+                ['title', 'Tựa đề CV / Chức danh', parsedData.title],
+                ['yearsOfExperience', 'Số năm kinh nghiệm', parsedData.yearsOfExperience],
+                ['bio', 'Giới thiệu bản thân', parsedData.bio],
+              ].map(([field, label, value]) => (
+                <label className={styles.previewSection} key={field}>
+                  <span className={styles.previewHeading}>
+                    <input type="checkbox" checked={selectedFields[field]} onChange={(e) => setSelectedFields((prev) => ({ ...prev, [field]: e.target.checked }))} />
+                    <strong>{label}</strong>
+                  </span>
+                  <span className={styles.previewValue}>{value || 'Chưa có dữ liệu'}</span>
+                </label>
+              ))}
+
+              {['skills', 'languages'].map((field) => (
+                <label className={styles.previewSection} key={field}>
+                  <span className={styles.previewHeading}>
+                    <input type="checkbox" checked={selectedFields[field]} onChange={(e) => setSelectedFields((prev) => ({ ...prev, [field]: e.target.checked }))} />
+                    <strong>{field === 'skills' ? 'Kỹ năng' : 'Ngôn ngữ'}</strong>
+                  </span>
+                  <span className={styles.previewTags}>
+                    {parsedData[field]?.length ? parsedData[field].map((item) => <span className={styles.previewTag} key={item}>{item}</span>) : 'Chưa có dữ liệu'}
+                  </span>
+                </label>
+              ))}
+
+              <div className={styles.previewSection}>
+                <label className={styles.previewHeading}>
+                  <input type="checkbox" checked={selectedFields.experiences} onChange={(e) => setSelectedFields((prev) => ({ ...prev, experiences: e.target.checked }))} />
+                  <strong>Kinh nghiệm làm việc</strong>
+                </label>
+                <div className={styles.previewExperiences}>
+                  {parsedData.experiences?.length ? parsedData.experiences.map((experience, index) => (
+                    <div className={styles.previewExperience} key={`${experience.company}-${experience.title}-${index}`}>
+                      <strong>{experience.title || 'Chưa có chức danh'}</strong>
+                      <span>{experience.company || 'Chưa có công ty'}</span>
+                      <small>{experience.startDate || '?'} - {experience.isCurrent ? 'Hiện tại' : experience.endDate || '?'}</small>
+                      {experience.description && <p>{experience.description}</p>}
+                    </div>
+                  )) : <span>Chưa có dữ liệu</span>}
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.modalActions}>
+              <button type="button" className={styles.btnSecondary} onClick={closeAiModal}>Hủy bỏ</button>
+              <button type="button" className={styles.btnPrimary} onClick={applyParsedData}>Áp dụng thông tin đã chọn</button>
             </div>
           </div>
         </div>
