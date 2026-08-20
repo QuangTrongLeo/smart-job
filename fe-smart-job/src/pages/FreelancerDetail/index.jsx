@@ -1,251 +1,323 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { freelancerService } from '~/services/freelancerService';
 import styles from './FreelancerDetail.module.scss';
 
-function FreelancerDetail() {
+const DEFAULT_AVATAR = 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
+
+const AVAILABILITY_MAP = {
+  AVAILABLE: { text: 'Sẵn sàng nhận việc', colorClass: styles.statusAvailable },
+  BUSY: { text: 'Đang bận', colorClass: styles.statusBusy },
+  UNAVAILABLE: { text: 'Tạm ngưng nhận việc', colorClass: styles.statusUnavailable },
+};
+
+const getFullName = (user) => {
+  if (!user) return 'Freelancer';
+  const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+  return fullName || user.username || user.email || 'Freelancer';
+};
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return '';
+  const parsed = new Date(dateStr);
+  return Number.isNaN(parsed.getTime()) 
+    ? dateStr 
+    : parsed.toLocaleDateString('vi-VN', { month: '2-digit', year: 'numeric' });
+};
+
+export function FreelancerDetail() {
+  const { id } = useParams();
+  const [profile, setProfile] = useState(null);
   const [isSaved, setIsSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const toggleSave = () => {
-    setIsSaved(!isSaved);
-  };
+  useEffect(() => {
+    if (!id) {
+      setError('Mã hồ sơ Freelancer không hợp lệ.');
+      setLoading(false);
+      return;
+    }
 
-  const handleContact = () => {
-    alert('Đã gửi yêu cầu liên hệ tới freelancer!');
+    const fetchProfile = async () => {
+      try {
+        setLoading(true);
+        setError('');
+        const response = await freelancerService.getProfileById(id);
+        const data = response?.data?.data || response?.data || null;
+        
+        if (!data) {
+          setError('Không tìm thấy thông tin Freelancer.');
+        } else {
+          setProfile(data);
+        }
+      } catch (err) {
+        console.error('Lỗi khi tải thông tin Freelancer:', err);
+        setError('Không thể tải hồ sơ Freelancer. Vui lòng thử lại sau.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [id]);
+
+  if (loading) {
+    return <div className={styles.stateCard}>Đang tải thông tin Freelancer...</div>;
+  }
+
+  if (error || !profile) {
+    return <div className={`${styles.stateCard} ${styles.errorCard}`}>{error || 'Không tìm thấy hồ sơ'}</div>;
+  }
+
+  const {
+    user = {},
+    isVerified = false,
+    title = 'Chưa cập nhật chức danh',
+    bio,
+    yearsOfExperience = 0,
+    availabilityStatus = 'AVAILABLE',
+    address,
+    hourlyRate,
+    availableHours,
+    languages = [],
+    rating = 0,
+    reviewCount = 0,
+    completionRate = 0,
+    skills = [],
+    experiences = [],
+    portfolioUrls = [],
+    cvUrl,
+  } = profile;
+
+  const fullName = getFullName(user);
+  const statusInfo = AVAILABILITY_MAP[availabilityStatus] || {
+    text: availabilityStatus,
+    colorClass: styles.statusAvailable,
   };
 
   return (
-    <div className={styles.freelancerContainer}>
-      {/* Profile Header Section */}
-      <section className={styles.headerSection}>
-        <div className={styles.headerContent}>
-          <div className={styles.userInfo}>
+    <div className={styles.pageContainer}>
+      {/* Header Profile Section */}
+      <section className={styles.headerCard}>
+        <div className={styles.mainInfo}>
+          <div className={styles.avatarWrapper}>
             <img
-              alt="Avatar Freelancer"
+              src={user.avatarUrl || DEFAULT_AVATAR}
+              alt={fullName}
               className={styles.avatar}
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBM9jM1gXvXY5VUQh5JYZ3CUEsro-vcVxGiUHEyg1mhD48voznNU13QQhVIoOF6zTcc2kq8xTAZ5QC-xp_9jLPdLkkAvOn9YX3iBZZPUJvQqH9pbZCq3NR3gAduxRdmG2WLoyi5Bl1eP6iSMuhIpgKQXVQNAx4AJLKmhcqT14J3i0otH169T3Krz4s08PfcKC6rXC1Nmjaifcm7UkizOgyoLfAbTt8Tn7HOyjTBHT07EYzB6-h60-U"
+              onError={(e) => { e.currentTarget.src = DEFAULT_AVATAR; }}
             />
-            <div className={styles.userDetails}>
-              <div className={styles.nameRow}>
-                <h1>Nguyễn Văn An</h1>
-                <span className={`material-symbols-outlined ${styles.verifiedIcon}`} style={{ fontVariationSettings: "'FILL' 1" }}>
-                  verified
-                </span>
+            {isVerified && (
+              <span className={styles.badgeVerified} title="Đã xác minh tài khoản">
+                <i className="bi bi-patch-check-fill"></i>
+              </span>
+            )}
+          </div>
+
+          <div className={styles.userMeta}>
+            <div className={styles.nameRow}>
+              <h1>{fullName}</h1>
+              <span className={`${styles.statusBadge} ${statusInfo.colorClass}`}>
+                <span className={styles.dot}></span> {statusInfo.text}
+              </span>
+            </div>
+            
+            <p className={styles.jobTitle}>{title}</p>
+            
+            <div className={styles.quickDetails}>
+              {address && (
+                <span><i className="bi bi-geo-alt-fill"></i> {address}</span>
+              )}
+              {user.email && (
+                <span><i className="bi bi-envelope-fill"></i> {user.email}</span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Action & Performance Stats */}
+        <div className={styles.sideAction}>
+          <div className={styles.statsContainer}>
+            <div className={styles.statBox}>
+              <div className={styles.statValue}>
+                <i className={`bi bi-star-fill ${styles.starIcon}`}></i>
+                {rating.toFixed(1)}
               </div>
-              <p className={styles.jobTitle}>Senior Fullstack Developer</p>
-              <div>
-                <span className={styles.statusBadge}>
-                  <span className={styles.statusDot}></span> Đang nhận dự án
-                </span>
-              </div>
+              <div className={styles.statLabel}>{reviewCount} đánh giá</div>
+            </div>
+
+            <div className={styles.statDivider}></div>
+
+            <div className={styles.statBox}>
+              <div className={styles.statValue}>{completionRate}%</div>
+              <div className={styles.statLabel}>Hoàn thành</div>
+            </div>
+
+            <div className={styles.statDivider}></div>
+
+            <div className={styles.statBox}>
+              <div className={styles.statValue}>{yearsOfExperience} Năm</div>
+              <div className={styles.statLabel}>Kinh nghiệm</div>
             </div>
           </div>
 
-          <div className={styles.actionArea}>
-            <div className={styles.statsRow}>
-              <div className={styles.statItem}>
-                <div className={styles.rating}>
-                  <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>
-                    star
-                  </span> 
-                  4.9
-                </div>
-                <p className={styles.statLabel}>(65 đánh giá)</p>
-              </div>
-              <div className={styles.divider}></div>
-              <div className={styles.statItem}>
-                <div className={styles.statValue}>98%</div>
-                <p className={styles.statLabel}>Hoàn thành</p>
-              </div>
-              <div className={styles.divider}></div>
-              <div className={styles.statItem}>
-                <div className={styles.statValue}>5 năm</div>
-                <p className={styles.statLabel}>Kinh nghiệm</p>
-              </div>
-            </div>
-
-            <div className={styles.headerButtons}>
-              <button 
-                onClick={toggleSave} 
-                className={`${styles.btnOutline} ${isSaved ? styles.saved : ''}`}
-              >
-                <span className="material-symbols-outlined" style={{ fontVariationSettings: isSaved ? "'FILL' 1" : "'FILL' 0" }}>
-                  bookmark
-                </span> 
-                {isSaved ? 'Đã lưu' : 'Lưu hồ sơ'}
-              </button>
-              <button onClick={handleContact} className={styles.btnPrimary}>
-                <span className="material-symbols-outlined">mail</span> 
-                Liên hệ ngay
-              </button>
-            </div>
+          <div className={styles.buttonGroup}>
+            <button
+              onClick={() => setIsSaved((prev) => !prev)}
+              className={`${styles.btnBookmark} ${isSaved ? styles.active : ''}`}
+            >
+              <i className={`bi ${isSaved ? 'bi-bookmark-fill' : 'bi-bookmark'}`}></i>
+              {isSaved ? 'Đã lưu' : 'Lưu hồ sơ'}
+            </button>
+            <button
+              onClick={() => alert(`Gửi yêu cầu trao đổi tới ${fullName}`)}
+              className={styles.btnContact}
+            >
+              <i className="bi bi-chat-dots-fill"></i> Liên hệ ngay
+            </button>
           </div>
         </div>
       </section>
 
-      {/* Main Content Layout */}
-      <main className={styles.mainLayout}>
-        {/* Left Column (8 columns) */}
+      {/* Main Content Grid */}
+      <div className={styles.contentLayout}>
+        {/* Left Column: Detailed Info */}
         <div className={styles.leftColumn}>
-          {/* Giới thiệu */}
-          <section className={styles.card}>
-            <h2 className={styles.sectionTitle}>Giới thiệu</h2>
-            <div className={styles.bioText}>
-              <p>
-                Xin chào, tôi là An. Với hơn 5 năm kinh nghiệm trong lĩnh vực phát triển phần mềm, tôi chuyên xây dựng các ứng dụng web phức tạp, mở rộng và hiệu suất cao. Tôi có đam mê mãnh liệt với việc giải quyết các bài toán kỹ thuật khó và tối ưu hóa trải nghiệm người dùng.
-              </p>
-              <p>
-                Tôi luôn tuân thủ nguyên tắc Clean Code, viết test cẩn thận và liên tục cập nhật công nghệ mới để mang lại giải pháp tốt nhất cho khách hàng. Phong cách làm việc của tôi đề cao sự minh bạch, giao tiếp hiệu quả và cam kết đúng tiến độ.
-              </p>
-            </div>
-          </section>
-
-          {/* Kỹ năng */}
-          <section className={styles.card}>
-            <h2 className={styles.sectionTitle}>Kỹ năng chuyên môn</h2>
-            <div className={styles.skillsList}>
-              {['ReactJS', 'Node.js', 'TypeScript', 'PostgreSQL', 'MongoDB', 'Docker', 'AWS', 'GraphQL'].map((skill, index) => (
-                <span key={index} className={styles.skillTag}>
-                  {skill}
-                </span>
-              ))}
-            </div>
-          </section>
-
-          {/* Kinh nghiệm làm việc */}
-          <section className={styles.card}>
-            <h2 className={styles.sectionTitle}>Kinh nghiệm làm việc</h2>
-            <div className={styles.experienceTimeline}>
-              <div className={styles.timelineItem}>
-                <div className={styles.dot}></div>
-                <h3 className={styles.roleTitle}>
-                  Senior Software Engineer <span className={styles.company}>tại TechNova Solutions</span>
-                </h3>
-                <p className={styles.timeRange}>Tháng 6, 2021 - Hiện tại</p>
-                <ul className={styles.responsibilities}>
-                  <li>Thiết kế kiến trúc và phát triển hệ thống ERP dựa trên microservices phục vụ hơn 10,000 người dùng hàng ngày.</li>
-                  <li>Tối ưu hóa hiệu suất database, giảm thời gian query xuống 40%.</li>
-                  <li>Dẫn dắt đội ngũ 4 frontend developers.</li>
-                </ul>
-              </div>
-
-              <div className={styles.timelineItem}>
-                <div className={`${styles.dot} ${styles.dotMuted}`}></div>
-                <h3 className={styles.roleTitle}>
-                  Fullstack Developer <span className={styles.company}>tại Creative Digital</span>
-                </h3>
-                <p className={styles.timeRange}>Tháng 3, 2019 - Tháng 5, 2021</p>
-                <ul className={styles.responsibilities}>
-                  <li>Xây dựng nền tảng E-learning bằng MERN stack (MongoDB, Express, React, Node.js).</li>
-                  <li>Tích hợp các cổng thanh toán Stripe và PayPal.</li>
-                </ul>
-              </div>
-            </div>
-          </section>
-
-          {/* Học vấn */}
-          <section className={styles.card}>
-            <h2 className={styles.sectionTitle}>Học vấn</h2>
-            <div className={styles.educationBlock}>
-              <div className={styles.eduIcon}>
-                <span className="material-symbols-outlined">school</span>
-              </div>
-              <div>
-                <h3 className={styles.degree}>Cử nhân Kỹ thuật Phần mềm</h3>
-                <p className={styles.school}>Đại học Khoa học Tự nhiên TP.HCM</p>
-                <p className={styles.eduTime}>2015 - 2019 • Tốt nghiệp loại Giỏi</p>
-              </div>
-            </div>
-          </section>
-
-          {/* Dự án tiêu biểu */}
-          <section className={styles.card}>
-            <h2 className={styles.sectionTitle}>Dự án tiêu biểu</h2>
-            <div className={styles.portfolioGrid}>
-              <div className={styles.portfolioCard}>
-                <img 
-                  alt="Dự án E-commerce" 
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuC7m2jLhehB4i5yUV-3kQOymNCp-KYRZM1nyuKseDS6ELGm1pXntUsLAIT6BuG0-bO5SKywOCV5ELujiOnDmgJ6eBBN4XvEbpzaxxCj9GryXIfpJxR7kaZfHzamks6Llh3IxbmUyw__WA54VsuCQvFz0uJ48MGd0z9oOAlFkpFvHx4iAUDEQVa9q5Cg_A6Ke5mhtDN7FijV8WaGmtDrFYMvhWLW-ZmKPRtzAkGZs99cRVMDr9uT89U7"
-                />
-                <div className={styles.portfolioBody}>
-                  <h3 className={styles.projectTitle}>Nền tảng Quản lý Bán hàng E-commerce</h3>
-                  <p className={styles.projectDesc}>
-                    Hệ thống quản lý kho, đơn hàng đa kênh với biểu đồ thống kê thời gian thực xây dựng bằng React và GraphQL.
-                  </p>
-                  <a href="#details" className={styles.projectLink}>Xem chi tiết</a>
-                </div>
-              </div>
-
-              <div className={styles.portfolioCard}>
-                <img 
-                  alt="Dự án Đặt lịch khám" 
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuCjZeD4F00Hgj1r3kwBSeLI-8wpN3Crg91k57zFuHdTl000tH8tgX2JE7piiBtmFD-QTX8C-e29GOcIVa5mxzWaFC2TIn7XB66yTflHzHXsoxHtBdl4T7A9G2uos_VnpTLrun6Oum3usbQC_5oq5GOqp3vtdL3Lu-DEbAfyqykxzVtddQW7qFVvHSt49GW4zwi4mc5A5ibfFhLXXP9vxTn6KYPg367g5GdtFo09tYBeG5S1HZMB3S4b"
-                />
-                <div className={styles.portfolioBody}>
-                  <h3 className={styles.projectTitle}>Ứng dụng Đặt lịch Khám Bệnh</h3>
-                  <p className={styles.projectDesc}>
-                    App React Native kết nối bệnh nhân và bác sĩ, tích hợp video call WebRTC và hệ thống nhắc nhở tự động.
-                  </p>
-                  <a href="#details" className={styles.projectLink}>Xem chi tiết</a>
-                </div>
-              </div>
-            </div>
-          </section>
-        </div>
-
-        {/* Right Column (4 columns) */}
-        <div className={styles.rightColumn}>
-          {/* Thông tin bổ sung */}
-          <div className={styles.card}>
-            <h3 className={styles.sectionTitle}>Thông tin bổ sung</h3>
-            <ul className={styles.infoList}>
-              <li className={styles.infoItem}>
-                <span className={`material-symbols-outlined ${styles.infoIcon}`}>payments</span>
-                <div>
-                  <div className={styles.infoLabel}>Giá tham khảo</div>
-                  <div className={styles.infoValue}>$30 / giờ</div>
-                </div>
-              </li>
-              <li className={styles.infoItem}>
-                <span className={`material-symbols-outlined ${styles.infoIcon}`}>location_on</span>
-                <div>
-                  <div className={styles.infoLabel}>Địa điểm</div>
-                  <div className={styles.infoValue}>TP. Hồ Chí Minh (Sẵn sàng Remote)</div>
-                </div>
-              </li>
-              <li className={styles.infoItem}>
-                <span className={`material-symbols-outlined ${styles.infoIcon}`}>language</span>
-                <div>
-                  <div className={styles.infoLabel}>Ngôn ngữ</div>
-                  <div className={styles.infoValue}>Tiếng Việt (Bản xứ), Tiếng Anh (C1)</div>
-                </div>
-              </li>
-              <li className={styles.infoItem}>
-                <span className={`material-symbols-outlined ${styles.infoIcon}`}>schedule</span>
-                <div>
-                  <div className={styles.infoLabel}>Thời gian khả dụng</div>
-                  <div className={styles.infoValue}>30-40 giờ / tuần</div>
-                </div>
-              </li>
-            </ul>
-          </div>
-
-          {/* AI Match Card */}
-          <div className={styles.aiMatchBox}>
-            <div className={styles.aiGlow}></div>
-            <div className={styles.aiTitleRow}>
-              <span className="material-symbols-outlined">auto_awesome</span>
-              <h3>AI Match</h3>
-            </div>
-            <div className={styles.scoreRow}>
-              <span className={styles.scoreValue}>95%</span>
-              <span className={styles.scoreText}>Phù hợp</span>
-            </div>
-            <p className={styles.aiDesc}>
-              Freelancer này rất phù hợp với dự án "Xây dựng CRM hệ thống" của bạn dựa trên kỹ năng ReactJS và Node.js.
+          {/* Bio */}
+          <section className={styles.cardSection}>
+            <h2>Giới thiệu bản thân</h2>
+            <p className={styles.bioText}>
+              {bio || 'Freelancer chưa cập nhật đoạn văn giới thiệu bản thân.'}
             </p>
-            <button className={styles.btnInvite}>Mời tham gia dự án</button>
-          </div>
+          </section>
+
+          {/* Skills */}
+          <section className={styles.cardSection}>
+            <h2>Kỹ năng chuyên môn</h2>
+            {skills.length > 0 ? (
+              <div className={styles.skillsGrid}>
+                {skills.map((skill, index) => (
+                  <span key={index} className={styles.skillBadge}>{skill}</span>
+                ))}
+              </div>
+            ) : (
+              <p className={styles.emptyText}>Chưa có thông tin kỹ năng.</p>
+            )}
+          </section>
+
+          {/* Work Experiences */}
+          <section className={styles.cardSection}>
+            <h2>Kinh nghiệm làm việc</h2>
+            {experiences.length > 0 ? (
+              <div className={styles.timeline}>
+                {experiences.map((exp, idx) => (
+                  <div key={idx} className={styles.timelineItem}>
+                    <div className={styles.timelinePoint}></div>
+                    <div className={styles.timelineContent}>
+                      <div className={styles.expHeader}>
+                        <h3>{exp.title || 'Vị trí công việc'}</h3>
+                        <span className={styles.companyName}>@ {exp.company || 'Công ty'}</span>
+                      </div>
+                      <div className={styles.expTime}>
+                        <i className="bi bi-calendar3"></i>
+                        {formatDate(exp.startDate)} - {exp.isCurrent ? 'Hiện tại' : formatDate(exp.endDate) || 'Chưa rõ'}
+                      </div>
+                      {exp.description && (
+                        <p className={styles.expDescription}>{exp.description}</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className={styles.emptyText}>Chưa cập nhật lịch sử kinh nghiệm làm việc.</p>
+            )}
+          </section>
+
+          {/* Portfolio URLs */}
+          {portfolioUrls.length > 0 && (
+            <section className={styles.cardSection}>
+              <h2>Dự án / Portfolio tiêu biểu</h2>
+              <div className={styles.portfolioList}>
+                {portfolioUrls.map((url, index) => (
+                  <a
+                    key={index}
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.portfolioItem}
+                  >
+                    <i className="bi bi-link-45deg"></i>
+                    <span>{url}</span>
+                    <i className={`bi bi-box-arrow-up-right ${styles.externalIcon}`}></i>
+                  </a>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
-      </main>
+
+        {/* Right Column: Key Details & Actions */}
+        <aside className={styles.rightColumn}>
+          <div className={styles.cardSection}>
+            <h3>Thông tin công việc</h3>
+            
+            <div className={styles.infoList}>
+              <div className={styles.infoRow}>
+                <div className={styles.iconBox}><i className="bi bi-currency-dollar"></i></div>
+                <div>
+                  <span className={styles.label}>Giá dịch vụ</span>
+                  <span className={styles.value}>
+                    {hourlyRate != null ? `$${hourlyRate} / giờ` : 'Thỏa thuận'}
+                  </span>
+                </div>
+              </div>
+
+              <div className={styles.infoRow}>
+                <div className={styles.iconBox}><i className="bi bi-clock-history"></i></div>
+                <div>
+                  <span className={styles.label}>Thời gian làm việc</span>
+                  <span className={styles.value}>{availableHours || 'Chưa cập nhật'}</span>
+                </div>
+              </div>
+
+              <div className={styles.infoRow}>
+                <div className={styles.iconBox}><i className="bi bi-translate"></i></div>
+                <div>
+                  <span className={styles.label}>Ngôn ngữ</span>
+                  <span className={styles.value}>
+                    {languages.length > 0 ? languages.join(', ') : 'Chưa cập nhật'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {cvUrl && (
+              <a
+                href={cvUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.btnCvDownload}
+              >
+                <i className="bi bi-file-earmark-pdf-fill"></i> Xem / Tải CV cá nhân
+              </a>
+            )}
+          </div>
+
+          <div className={`${styles.cardSection} ${styles.hireBox}`}>
+            <i className={`bi bi-briefcase-fill ${styles.hireIcon}`}></i>
+            <h3>Cần tìm Freelancer dự án?</h3>
+            <p>Liên hệ và trao đổi trực tiếp với {fullName} để bắt đầu công việc ngay hôm nay.</p>
+            <button 
+              onClick={() => alert(`Đã gửi lời mời hợp tác tới ${fullName}`)}
+              className={styles.btnHire}
+            >
+              Gửi lời mời hợp tác
+            </button>
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }

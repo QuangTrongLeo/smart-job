@@ -27,10 +27,10 @@ public class FreelancerProfileController {
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK.value(), "Lấy danh sách Freelancer thành công", profiles));
     }
 
-    // Xem chi tiết hồ sơ Freelancer theo User ID (Public)
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<ApiResponse<FreelancerProfileResponse>> getProfileByUserId(@PathVariable String userId) {
-        FreelancerProfileResponse profile = profileService.getProfileByUserId(userId);
+    // Xem chi tiết hồ sơ Freelancer theo ID Hồ sơ (Public) - GET /freelancers/{id}
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<FreelancerProfileResponse>> getProfileById(@PathVariable String id) {
+        FreelancerProfileResponse profile = profileService.getProfileById(id);
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK.value(), "Lấy thông tin Freelancer thành công", profile));
     }
 

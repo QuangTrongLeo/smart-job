@@ -80,22 +80,23 @@ public class FavoriteServiceImpl implements FavoriteService {
     // --- CLIENT ACTIONS ---
 
     @Override
-    public boolean toggleFavoriteFreelancer(String freelancerUserId) {
+    public boolean toggleFavoriteFreelancer(String freelancerProfileId) {
         validateRole("CLIENT", "Chỉ Nhà tuyển dụng (Client) mới có thể lưu hồ sơ Freelancer");
         String clientId = SecurityUtils.getCurrentUserId();
 
-        if (!profileRepository.existsByUserId(freelancerUserId)) {
-            throw new IllegalArgumentException("Không tìm thấy hồ sơ Freelancer với User ID: " + freelancerUserId);
+        // Kiểm tra tồn tại theo ID của hồ sơ Freelancer
+        if (!profileRepository.existsById(freelancerProfileId)) {
+            throw new IllegalArgumentException("Không tìm thấy hồ sơ Freelancer với ID: " + freelancerProfileId);
         }
 
-        Optional<FavoriteFreelancer> existingFavorite = favoriteFreelancerRepository.findByClientIdAndFreelancerId(clientId, freelancerUserId);
+        Optional<FavoriteFreelancer> existingFavorite = favoriteFreelancerRepository.findByClientIdAndFreelancerId(clientId, freelancerProfileId);
         if (existingFavorite.isPresent()) {
             favoriteFreelancerRepository.delete(existingFavorite.get());
             return false;
         } else {
             FavoriteFreelancer favorite = FavoriteFreelancer.builder()
                     .clientId(clientId)
-                    .freelancerId(freelancerUserId)
+                    .freelancerId(freelancerProfileId)
                     .build();
             favoriteFreelancerRepository.save(favorite);
             return true;
@@ -110,7 +111,8 @@ public class FavoriteServiceImpl implements FavoriteService {
         return favoriteFreelancerRepository.findByClientId(clientId)
                 .stream()
                 .map(fav -> {
-                    FreelancerProfileResponse profileResponse = profileService.getProfileByUserId(fav.getFreelancerId());
+                    // Đã sửa: Gọi getProfileById thay vì getProfileByUserId
+                    FreelancerProfileResponse profileResponse = profileService.getProfileById(fav.getFreelancerId());
                     return favoriteFreelancerMapper.toResponse(fav, profileResponse);
                 })
                 .toList();

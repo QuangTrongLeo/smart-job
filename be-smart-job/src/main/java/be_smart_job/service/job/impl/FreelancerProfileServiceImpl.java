@@ -36,8 +36,8 @@ public class FreelancerProfileServiceImpl implements FreelancerProfileService {
     }
 
     @Override
-    public FreelancerProfileResponse getProfileByUserId(String userId) {
-        FreelancerProfile profile = profileRepository.findByUserId(userId).orElse(null);
+    public FreelancerProfileResponse getProfileById(String id) {
+        FreelancerProfile profile = profileRepository.findById(id).orElse(null);
         if (profile == null) {
             return null;
         }
@@ -49,7 +49,6 @@ public class FreelancerProfileServiceImpl implements FreelancerProfileService {
         validateFreelancerRole();
         String currentUserId = SecurityUtils.getCurrentUserId();
 
-        // Nếu chưa tạo hồ sơ, trả về null một cách nhẹ nhàng (Frontend nhận data: null)
         FreelancerProfile profile = profileRepository.findByUserId(currentUserId).orElse(null);
         if (profile == null) {
             return null;
@@ -112,12 +111,18 @@ public class FreelancerProfileServiceImpl implements FreelancerProfileService {
         }
 
         FreelancerProfileResponse response = profileMapper.toResponse(profile);
-        User user = userRepository.findById(profile.getUserId()).orElse(null);
 
-        if (user != null) {
-            UserResponse userResponse = userMapper.toResponse(user);
-            response.setUser(userResponse);
-            response.setIsVerified(user.getStatus() == UserStatus.ACTIVE);
+        if (profile.getUserId() != null) {
+            // Tra cứu linh hoạt: thử ID -> Username -> Email
+            User user = userRepository.findById(profile.getUserId())
+                    .orElseGet(() -> userRepository.findByUsername(profile.getUserId())
+                            .orElseGet(() -> userRepository.findByEmail(profile.getUserId()).orElse(null)));
+
+            if (user != null) {
+                UserResponse userResponse = userMapper.toResponse(user);
+                response.setUser(userResponse);
+                response.setIsVerified(user.getStatus() == UserStatus.ACTIVE);
+            }
         }
 
         return response;

@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface FreelancerProfileService {
     List<FreelancerProfileResponse> getAllProfiles();
-    FreelancerProfileResponse getProfileByUserId(String userId);
+    FreelancerProfileResponse getProfileById(String id); // Đã đổi từ getProfileByUserId(userId)
     FreelancerProfileResponse getMyProfile();
     FreelancerProfileResponse createMyProfile(FreelancerProfileRequest request);
     FreelancerProfileResponse updateMyProfile(FreelancerProfileRequest request);

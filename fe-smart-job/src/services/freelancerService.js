@@ -2,8 +2,8 @@ import axiosClient from '../config/axiosClient';
 
 export const freelancerService = {
   getAllProfiles: () => axiosClient.get('/freelancers'),
-  
-  getProfileByUserId: (userId) => axiosClient.get(`/freelancers/user/${userId}`),
+
+  getProfileById: (id) => axiosClient.get(`/freelancers/${id}`),
   
   getMyProfile: () => axiosClient.get('/freelancers/me'),
   
