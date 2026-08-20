@@ -70,6 +70,20 @@ const MOCK_JOBS_FALLBACK = [
 
 const ITEMS_PER_PAGE = 5;
 
+// Hàm hỗ trợ bóc tách Job ID chính xác từ mọi dạng response của Favorite Service
+const extractJobId = (item) => {
+  if (!item) return null;
+  if (typeof item === 'string' || typeof item === 'number') return String(item);
+  
+  // Ưu tiên các trường chứa ID công việc thực tế
+  if (item.jobId) return String(item.jobId);
+  if (item.job?.id) return String(item.job.id);
+  if (item.job?.jobId) return String(item.job.jobId);
+  if (item.id) return String(item.id);
+  
+  return null;
+};
+
 function Jobs() {
   const navigate = useNavigate();
 
@@ -109,27 +123,43 @@ function Jobs() {
           favoriteService.getMyFavoriteJobs(),
         ]);
 
-        if (jobsRes.status === 'fulfilled' && jobsRes.value?.data?.length > 0) {
-          setJobs(jobsRes.value.data);
+        // 1. Xử lý danh sách Jobs
+        if (jobsRes.status === 'fulfilled') {
+          const rawJobs = jobsRes.value?.data?.data || jobsRes.value?.data || [];
+          setJobs(Array.isArray(rawJobs) && rawJobs.length > 0 ? rawJobs : MOCK_JOBS_FALLBACK);
         } else {
           setJobs(MOCK_JOBS_FALLBACK);
         }
 
-        if (categoriesRes.status === 'fulfilled' && categoriesRes.value?.data) {
-          setCategories(categoriesRes.value.data);
+        // 2. Xử lý Categories
+        if (categoriesRes.status === 'fulfilled') {
+          setCategories(categoriesRes.value?.data?.data || categoriesRes.value?.data || []);
         }
 
-        if (expRes.status === 'fulfilled' && expRes.value?.data) {
-          setExperienceLevels(expRes.value.data);
+        // 3. Xử lý Experience Levels
+        if (expRes.status === 'fulfilled') {
+          setExperienceLevels(expRes.value?.data?.data || expRes.value?.data || []);
         }
 
-        if (empTypesRes.status === 'fulfilled' && empTypesRes.value?.data) {
-          setEmploymentTypes(empTypesRes.value.data);
+        // 4. Xử lý Employment Types
+        if (empTypesRes.status === 'fulfilled') {
+          setEmploymentTypes(empTypesRes.value?.data?.data || empTypesRes.value?.data || []);
         }
 
-        if (favsRes.status === 'fulfilled' && favsRes.value?.data) {
-          const favIds = favsRes.value.data.map((item) => item.jobId || item.id);
-          setFavorites(favIds);
+        // 5. Xử lý danh sách Yêu thích (Bóc tách đa tầng hỗ trợ cả Spring Pageable)
+        if (favsRes.status === 'fulfilled') {
+          const resVal = favsRes.value;
+          const rawFavs =
+            resVal?.data?.data?.content ||
+            resVal?.data?.content ||
+            resVal?.data?.data ||
+            resVal?.data ||
+            [];
+
+          if (Array.isArray(rawFavs)) {
+            const favIds = rawFavs.map(extractJobId).filter(Boolean);
+            setFavorites(favIds);
+          }
         }
       } catch (error) {
         console.error('Lỗi kết nối dữ liệu:', error);
@@ -214,7 +244,14 @@ function Jobs() {
   // Reset về trang 1 khi thay đổi bộ lọc
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, location, selectedCategories, selectedExperiences, selectedType, sortBy]);
+  }, [
+    searchTerm,
+    location,
+    selectedCategories,
+    selectedExperiences,
+    selectedType,
+    sortBy,
+  ]);
 
   // Tính toán Phân trang
   const totalPages = Math.ceil(filteredJobs.length / ITEMS_PER_PAGE) || 1;
@@ -227,7 +264,8 @@ function Jobs() {
   const formatSalary = (min, max, currency) => {
     if (!min && !max) return 'Thỏa thuận';
     const curr = currency || 'USD';
-    if (min && max) return `${min.toLocaleString()} - ${max.toLocaleString()} ${curr}`;
+    if (min && max)
+      return `${min.toLocaleString()} - ${max.toLocaleString()} ${curr}`;
     if (min) return `Từ ${min.toLocaleString()} ${curr}`;
     return `Đến ${max.toLocaleString()} ${curr}`;
   };
@@ -237,27 +275,36 @@ function Jobs() {
     navigate(`/job/${jobId}`);
   };
 
-  // Yêu thích công việc (chặn nổi bọt sự kiện để không bị trigger click thẻ card)
+  // Toggle Favorite dùng Optimistic Update (mượt mà & chống lỗi đè state)
   const toggleFavorite = async (e, jobId) => {
     e.stopPropagation();
-    try {
-      const response = await favoriteService.toggleFavoriteJob(jobId);
-      const isFavorited = response?.data;
+    const targetId = String(jobId);
 
-      setFavorites((prev) =>
-        isFavorited ? [...prev, jobId] : prev.filter((id) => id !== jobId)
-      );
+    // Cập nhật UI ngay lập tức
+    setFavorites((prev) =>
+      prev.includes(targetId)
+        ? prev.filter((id) => id !== targetId)
+        : [...prev, targetId]
+    );
+
+    try {
+      await favoriteService.toggleFavoriteJob(jobId);
     } catch (error) {
       console.error('Lỗi khi lưu/bỏ lưu công việc:', error);
+      // Revert lại UI nếu API gọi thất bại
       setFavorites((prev) =>
-        prev.includes(jobId) ? prev.filter((id) => id !== jobId) : [...prev, jobId]
+        prev.includes(targetId)
+          ? prev.filter((id) => id !== targetId)
+          : [...prev, targetId]
       );
     }
   };
 
   const handleCategoryChange = (catId) => {
     setSelectedCategories((prev) =>
-      prev.includes(catId) ? prev.filter((id) => id !== catId) : [...prev, catId]
+      prev.includes(catId)
+        ? prev.filter((id) => id !== catId)
+        : [...prev, catId]
     );
   };
 
@@ -421,14 +468,15 @@ function Jobs() {
               <p>Đang tải danh sách công việc...</p>
             ) : paginatedJobs.length > 0 ? (
               paginatedJobs.map((job) => {
-                const isFav = favorites.includes(job.id);
+                // Kiểm tra đồng bộ String giữa job.id và danh sách favorites
+                const isFav = favorites.includes(String(job.id));
 
-                // Ưu tiên avatarUrl của Client từ UserResponse, fallback nếu null/rỗng
                 const clientAvatar = job.client?.avatarUrl || DEFAULT_AVATAR;
 
-                // Tên người tuyển dụng
                 const clientName = job.client
-                  ? `${job.client.firstName || ''} ${job.client.lastName || ''}`.trim() || job.client.username
+                  ? `${job.client.firstName || ''} ${
+                      job.client.lastName || ''
+                    }`.trim() || job.client.username
                   : 'Người tuyển dụng';
 
                 return (
@@ -520,7 +568,9 @@ function Jobs() {
                         </div>
                       )}
 
-                      <p className={styles.jobDescription}>{job.description}</p>
+                      <p className={styles.jobDescription}>
+                        {job.description}
+                      </p>
                     </div>
                   </div>
                 );

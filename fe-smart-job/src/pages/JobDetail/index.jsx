@@ -16,13 +16,29 @@ function JobDetail() {
   const [hasApplied, setHasApplied] = useState(false);
 
   useEffect(() => {
-    const fetchJobDetail = async () => {
+    const fetchData = async () => {
       setLoading(true);
       try {
-        const response = await jobService.getJobById(id);
-        if (response && response.data) {
-          setJob(response.data);
+        // 1. Lấy thông tin chi tiết công việc
+        const jobResponse = await jobService.getJobById(id);
+        if (jobResponse && jobResponse.data) {
+          setJob(jobResponse.data);
         }
+
+        // 2. Kiểm tra xem công việc này đã được yêu thích trước đó chưa
+        try {
+          const favResponse = await favoriteService.getMyFavoriteJobs();
+          if (favResponse && favResponse.data && Array.isArray(favResponse.data)) {
+            const isFavorited = favResponse.data.some(
+              (item) => item.job?.id === id || item.jobId === id
+            );
+            setIsSaved(isFavorited);
+          }
+        } catch (favError) {
+          // Bỏ qua lỗi nếu người dùng chưa đăng nhập hoặc không có quyền Freelancer
+          console.warn('Không thể kiểm tra trạng thái yêu thích:', favError);
+        }
+
       } catch (error) {
         console.error('Lỗi khi tải thông tin công việc:', error);
       } finally {
@@ -31,7 +47,7 @@ function JobDetail() {
     };
 
     if (id) {
-      fetchJobDetail();
+      fetchData();
     }
   }, [id]);
 
@@ -66,14 +82,27 @@ function JobDetail() {
     }
   };
 
+  // Hàm Toggle công việc yêu thích
   const toggleSave = async () => {
     if (!job?.id) return;
+
+    const previousSavedState = isSaved;
+    // Cập nhật giao diện trước (Optimistic UI)
+    setIsSaved(!previousSavedState);
+
     try {
       const response = await favoriteService.toggleFavoriteJob(job.id);
-      setIsSaved(response?.data ?? !isSaved);
+      // Kết quả trả về từ API (true = đã thêm, false = đã xóa)
+      if (response && typeof response.data === 'boolean') {
+        setIsSaved(response.data);
+      }
     } catch (error) {
       console.error('Lỗi khi lưu/bỏ yêu thích:', error);
-      setIsSaved(!isSaved);
+      // Hoàn tác về trạng thái cũ nếu gọi API thất bại
+      setIsSaved(previousSavedState);
+      
+      const errorMessage = error.response?.data?.message || 'Thao tác thất bại. Vui lòng thử lại!';
+      alert(errorMessage);
     }
   };
 
@@ -92,7 +121,11 @@ function JobDetail() {
       <div className={styles.jobDetailContainer}>
         <div style={{ textAlign: 'center', padding: '3rem' }}>
           <h2>Không tìm thấy công việc!</h2>
-          <button className={styles.btnPrimary} style={{ width: 'auto', margin: '1rem auto' }} onClick={() => navigate('/jobs')}>
+          <button 
+            className={styles.btnPrimary} 
+            style={{ width: 'auto', margin: '1rem auto' }} 
+            onClick={() => navigate('/jobs')}
+          >
             Quay lại danh sách việc làm
           </button>
         </div>
@@ -165,7 +198,7 @@ function JobDetail() {
             </div>
           )}
 
-          {/* Khối MỚI: Giới thiệu chi tiết về Nhà tuyển dụng */}
+          {/* Giới thiệu chi tiết về Nhà tuyển dụng */}
           <div className={styles.card}>
             <h2 className={styles.sectionTitle}>Về nhà tuyển dụng</h2>
             <div className={styles.employerIntro}>
@@ -228,7 +261,7 @@ function JobDetail() {
             </div>
           </div>
 
-          {/* Khối MỚI: Thẻ chi tiết Thông tin nhà tuyển dụng */}
+          {/* Thẻ chi tiết Thông tin nhà tuyển dụng */}
           <div className={styles.clientDetailCard}>
             <div className={styles.clientHeader}>
               <img
