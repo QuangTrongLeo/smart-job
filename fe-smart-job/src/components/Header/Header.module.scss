@@ -102,6 +102,7 @@
 }
 
 .iconBtn {
+  position: relative;
   background: transparent;
   border: none;
   font-size: 20px;
@@ -241,4 +242,23 @@
     background-color: #fef2f2;
     color: #dc2626;
   }
+}
+
+.unreadMessageBadge {
+  position: absolute;
+  top: -2px;
+  right: -4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border: 2px solid #ffffff;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
 }

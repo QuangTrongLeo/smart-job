@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { freelancerService, favoriteService } from '~/services';
+import { useNavigate, useParams } from 'react-router-dom';
+import { freelancerService, favoriteService, chatService } from '~/services';
 import styles from './FreelancerDetail.module.scss';
 
 const DEFAULT_AVATAR = 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
@@ -27,10 +27,13 @@ const formatDate = (dateStr) => {
 
 export function FreelancerDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [isSaved, setIsSaved] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [messaging, setMessaging] = useState(false);
+  const [messageError, setMessageError] = useState('');
 
   useEffect(() => {
     if (!id) {
@@ -109,6 +112,27 @@ export function FreelancerDetail() {
       console.error('Lỗi khi thực hiện toggle favorite:', err);
       // Revert lại trạng thái cũ nếu API gọi lỗi
       setIsSaved(previousState);
+    }
+  };
+
+  const handleMessage = async () => {
+    const partnerId = profile?.user?.id;
+    if (!partnerId || messaging) {
+      setMessageError('Không tìm thấy thông tin tài khoản Freelancer.');
+      return;
+    }
+
+    setMessaging(true);
+    setMessageError('');
+    try {
+      const response = await chatService.getOrCreateConversation({ partnerId });
+      const conversation = response?.data?.data || response?.data;
+      if (!conversation?.id) throw new Error('Missing conversation id');
+      navigate(`/messages?conversationId=${conversation.id}`, { state: { conversation } });
+    } catch (requestError) {
+      console.error('Lỗi khi khởi tạo cuộc trò chuyện:', requestError);
+      setMessageError(requestError.response?.data?.message || 'Không thể mở cuộc trò chuyện. Vui lòng thử lại.');
+      setMessaging(false);
     }
   };
 
@@ -220,12 +244,11 @@ export function FreelancerDetail() {
               <i className={`bi ${isSaved ? 'bi-bookmark-fill' : 'bi-bookmark'}`}></i>
               {isSaved ? 'Đã lưu' : 'Lưu hồ sơ'}
             </button>
-            <button
-              onClick={() => alert(`Gửi yêu cầu trao đổi tới ${fullName}`)}
-              className={styles.btnContact}
-            >
-              <i className="bi bi-chat-dots-fill"></i> Liên hệ ngay
+            <button onClick={handleMessage} className={styles.btnContact} disabled={messaging}>
+              <i className={messaging ? 'bi bi-hourglass-split' : 'bi bi-chat-dots-fill'}></i>
+              {messaging ? 'Đang mở cuộc trò chuyện...' : 'Liên hệ ngay'}
             </button>
+            {messageError && <p role="alert">{messageError}</p>}
           </div>
         </div>
       </section>

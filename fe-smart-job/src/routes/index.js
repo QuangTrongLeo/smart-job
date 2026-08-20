@@ -37,15 +37,17 @@ const publishRoutes = [
 const freelancerRoutes = [
 //   { path: '/freelancer/dashboard', component: FreelancerDashboard },
 //   { path: '/freelancer/my-jobs', component: MyJobs },
-  { path: config.routes.messages, component: Messages },
   { path: config.routes.favorite_jobs, component: FavoriteJobs },
   { path: config.routes.manage_freelancer, component: FreelancerProfileManager },
 ];
 
 const clientRoutes = [
-  { path: config.routes.messages, component: Messages },
   { path: config.routes.manage_jobs, component: ClientJobManagement },
   { path: config.routes.favorite_freelancers, component: FavoriteFreelancers },
+];
+
+const messageRoutes = [
+  { path: config.routes.messages, component: Messages },
 ];
 
 // 4. Routes dành cho Admin (Mặc định dùng DefaultLayout có Sidebar)
@@ -54,4 +56,4 @@ const adminRoutes = [
 //   { path: '/admin/users', component: UserManage },
 ];
 
-export { publishRoutes, freelancerRoutes, clientRoutes, adminRoutes };
+export { publishRoutes, messageRoutes, freelancerRoutes, clientRoutes, adminRoutes };

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { jobService, favoriteService } from '../../services';
+import { jobService, favoriteService, chatService } from '../../services';
 import styles from './JobDetail.module.scss';
 
 const DEFAULT_AVATAR =
@@ -14,6 +14,8 @@ function JobDetail() {
   const [loading, setLoading] = useState(true);
   const [isSaved, setIsSaved] = useState(false);
   const [hasApplied, setHasApplied] = useState(false);
+  const [messaging, setMessaging] = useState(false);
+  const [messageError, setMessageError] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -74,11 +76,28 @@ function JobDetail() {
     alert('Ứng tuyển thành công!');
   };
 
-  const handleMessage = () => {
-    if (job?.client?.id) {
-      navigate(`/messages?user=${job.client.id}`);
-    } else {
-      navigate('/messages');
+  const handleMessage = async () => {
+    const partnerId = job?.client?.id;
+    if (!partnerId || messaging) {
+      setMessageError('Không tìm thấy thông tin người tuyển dụng.');
+      return;
+    }
+
+    setMessaging(true);
+    setMessageError('');
+    try {
+      const response = await chatService.getOrCreateConversation({
+        partnerId,
+        jobId: job.id,
+      });
+      const conversation = response?.data?.data || response?.data;
+      if (!conversation?.id) throw new Error('Missing conversation id');
+      navigate(`/messages?conversationId=${conversation.id}`, { state: { conversation } });
+    } catch (error) {
+      console.error('Lỗi khi khởi tạo cuộc trò chuyện:', error);
+      setMessageError(error.response?.data?.message || 'Không thể mở cuộc trò chuyện. Vui lòng thử lại.');
+    } finally {
+      setMessaging(false);
     }
   };
 
@@ -242,10 +261,11 @@ function JobDetail() {
                 {hasApplied ? 'Đã ứng tuyển' : 'Ứng tuyển ngay'}
               </button>
 
-              <button onClick={handleMessage} className={styles.btnMessage}>
-                <i className="bi bi-chat-dots-fill"></i>
-                Nhắn tin với người tuyển dụng
+              <button onClick={handleMessage} className={styles.btnMessage} disabled={messaging}>
+                <i className={messaging ? 'bi bi-hourglass-split' : 'bi bi-chat-dots-fill'}></i>
+                {messaging ? 'Đang mở cuộc trò chuyện...' : 'Nhắn tin với người tuyển dụng'}
               </button>
+              {messageError && <p role="alert">{messageError}</p>}
 
               <button
                 onClick={toggleSave}

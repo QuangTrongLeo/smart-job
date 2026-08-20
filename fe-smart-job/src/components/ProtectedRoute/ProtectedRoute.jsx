@@ -16,7 +16,7 @@ function ProtectedRoute({ children, allowedRoles }) {
 
   // 3. Kiểm tra Role
   // Lưu ý: Chuẩn hóa role về chữ hoa để tránh lỗi lệch hoa/thường
-  const userRole = user?.role?.toUpperCase(); 
+  const userRole = (user?.roleType || user?.role || '').toUpperCase(); 
   const hasPermission = allowedRoles.some((role) => role.toUpperCase() === userRole);
 
   if (!hasPermission) {

@@ -2,13 +2,46 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import config from '~/config';
 import { useAuth } from '~/context/AuthContext';
+import { chatService } from '~/services';
 import styles from './Header.module.scss';
 
 function Header() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    if (!user) {
+      setUnreadMessageCount(0);
+      return undefined;
+    }
+
+    let cancelled = false;
+
+    const loadUnreadMessages = async () => {
+      try {
+        const response = await chatService.getMyConversations();
+        const conversations = response?.data?.data || response?.data || [];
+        const totalUnread = Array.isArray(conversations)
+          ? conversations.reduce((total, conversation) => total + (Number(conversation.unreadCount) || 0), 0)
+          : 0;
+
+        if (!cancelled) setUnreadMessageCount(totalUnread);
+      } catch (error) {
+        if (!cancelled) console.warn('Không thể tải số tin nhắn chưa đọc:', error);
+      }
+    };
+
+    loadUnreadMessages();
+    const intervalId = window.setInterval(loadUnreadMessages, 3000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [user]);
 
   // Đóng Dropdown khi click ngoài
   useEffect(() => {
@@ -72,6 +105,11 @@ function Header() {
               onClick={() => navigate(config.routes.messages)}
             >
               <i className="bi bi-chat-dots"></i>
+              {unreadMessageCount > 0 && (
+                <span className={styles.unreadMessageBadge} aria-label={`${unreadMessageCount} tin nhắn chưa đọc`}>
+                  {unreadMessageCount > 99 ? '99+' : unreadMessageCount}
+                </span>
+              )}
             </button>
 
             {/* Avatar & Dropdown */}

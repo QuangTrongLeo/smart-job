@@ -2,7 +2,7 @@
 import { Fragment } from 'react';
 import { Routes, Route } from 'react-router-dom';
 
-import { publishRoutes, freelancerRoutes, clientRoutes, adminRoutes } from '~/routes';
+import { publishRoutes, messageRoutes, freelancerRoutes, clientRoutes, adminRoutes } from '~/routes';
 import { DefaultLayout } from '~/layouts';
 import ProtectedRoute from '~/components/ProtectedRoute/ProtectedRoute'; // Import ProtectedRoute
 
@@ -50,6 +50,9 @@ function App() {
     <Routes>
       {/* 1. Public Routes: Ai cũng truy cập được */}
       {renderRoutes(publishRoutes)}
+
+      {/* Messages dùng chung cho Client và Freelancer */}
+      {renderRoutes(messageRoutes, ['CLIENT', 'FREELANCER'])}
 
       {/* 2. Client Routes: Chỉ dành cho Client */}
       {renderRoutes(clientRoutes, ['CLIENT'])}
