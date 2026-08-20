@@ -1,13 +1,18 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { enumService } from '../../services';
+import { enumService, jobService } from '../../services';
 import styles from './Home.module.scss';
+
+const DEFAULT_AVATAR = 'https://ui-avatars.com/api/?background=dae2fd&color=004ac6&name=SmartJob';
 
 function Home() {
   const [employmentTypes, setEmploymentTypes] = useState([]);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [selectedLocation, setSelectedLocation] = useState('');
   const [selectedEmploymentType, setSelectedEmploymentType] = useState('');
+  const [featuredJobs, setFeaturedJobs] = useState([]);
+  const [jobsLoading, setJobsLoading] = useState(true);
+  const [jobsError, setJobsError] = useState('');
 
   // Danh sách địa điểm mock
   const locations = [
@@ -32,6 +37,49 @@ function Home() {
 
     fetchEmploymentTypes();
   }, []);
+
+  useEffect(() => {
+    const fetchFeaturedJobs = async () => {
+      try {
+        setJobsLoading(true);
+        setJobsError('');
+        const response = await jobService.getAllJobs();
+        const jobs = response?.data?.data || response?.data || [];
+        setFeaturedJobs(Array.isArray(jobs) ? jobs.slice(0, 6) : []);
+      } catch (error) {
+        console.error('Lỗi khi lấy danh sách công việc:', error);
+        setJobsError('Không thể tải danh sách công việc lúc này.');
+      } finally {
+        setJobsLoading(false);
+      }
+    };
+
+    fetchFeaturedJobs();
+  }, []);
+
+  const formatBudget = (job) => {
+    const currency = job.currency || 'USD';
+    const minBudget = job.minBudget != null ? Number(job.minBudget).toLocaleString('vi-VN') : null;
+    const maxBudget = job.maxBudget != null ? Number(job.maxBudget).toLocaleString('vi-VN') : null;
+
+    if (minBudget && maxBudget) return `${minBudget} - ${maxBudget} ${currency}`;
+    if (minBudget) return `Từ ${minBudget} ${currency}`;
+    if (maxBudget) return `Đến ${maxBudget} ${currency}`;
+    return 'Thỏa thuận';
+  };
+
+  const formatPostedDate = (dateValue) => {
+    if (!dateValue) return 'Mới đăng';
+    const date = new Date(dateValue);
+    if (Number.isNaN(date.getTime())) return 'Mới đăng';
+    return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  };
+
+  const getClientName = (client) => {
+    if (!client) return 'Nhà tuyển dụng';
+    const fullName = `${client.firstName || ''} ${client.lastName || ''}`.trim();
+    return fullName || client.username || client.email || 'Nhà tuyển dụng';
+  };
 
   const handleSearch = () => {
     // Xử lý tìm kiếm với các state: searchKeyword, selectedLocation, selectedEmploymentType
@@ -122,34 +170,48 @@ function Home() {
             </Link>
           </div>
 
-          <div className={styles.gridCards}>
-            {/* Job Card 1 */}
-            <div className={styles.jobCard}>
-              <div className={styles.cardHeader}>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <div className={styles.companyLogo}>TC</div>
-                  <div>
-                    <h3 className={styles.jobTitle}>Senior Frontend Developer</h3>
-                    <p className={styles.companyName}>TechCorp VN</p>
-                  </div>
-                </div>
-                <button className={styles.btnBookmark}>
-                  <i className="bi bi-bookmark"></i>
-                </button>
-              </div>
-              <div className={styles.cardTags}>
-                <span className={styles.skillBadge}>ReactJS</span>
-                <span className={styles.skillBadge}>TypeScript</span>
-                <span className={styles.typeBadge}>Remote</span>
-              </div>
-              <div className={styles.cardFooter}>
-                <span className={styles.salary}>
-                  $1500 - $2500 <span>/tháng</span>
-                </span>
-                <span className={styles.timePosted}>2 ngày trước</span>
-              </div>
+          {jobsLoading && <div className={styles.jobsState}><i className="bi bi-arrow-repeat"></i><span>Đang tải công việc...</span></div>}
+          {!jobsLoading && jobsError && <div className={styles.jobsState}><i className="bi bi-exclamation-circle"></i><span>{jobsError}</span></div>}
+          {!jobsLoading && !jobsError && featuredJobs.length === 0 && <div className={styles.jobsState}><i className="bi bi-briefcase"></i><span>Chưa có công việc nổi bật.</span></div>}
+
+          {!jobsLoading && !jobsError && featuredJobs.length > 0 && (
+            <div className={styles.gridCards}>
+              {featuredJobs.map((job) => {
+                const clientName = getClientName(job.client);
+                const skills = job.requiredSkills || [];
+
+                return (
+                  <Link to={`/job/${job.id}`} className={styles.jobCard} key={job.id}>
+                    <div className={styles.cardHeader}>
+                      <div className={styles.companyInfo}>
+                        <img
+                          className={styles.companyLogo}
+                          src={job.client?.avatarUrl || DEFAULT_AVATAR}
+                          alt={clientName}
+                          onError={(event) => { event.currentTarget.src = DEFAULT_AVATAR; }}
+                        />
+                        <div>
+                          <h3 className={styles.jobTitle}>{job.title || 'Công việc mới'}</h3>
+                          <p className={styles.companyName}>{job.companyName || clientName}</p>
+                        </div>
+                      </div>
+                      <i className={`bi bi-arrow-up-right ${styles.cardArrow}`}></i>
+                    </div>
+
+                    <div className={styles.cardTags}>
+                      {skills.slice(0, 3).map((skill) => <span className={styles.skillBadge} key={skill}>{skill}</span>)}
+                      {job.employmentType && <span className={styles.typeBadge}>{job.employmentType}</span>}
+                    </div>
+
+                    <div className={styles.cardFooter}>
+                      <span className={styles.salary}>{formatBudget(job)}</span>
+                      <span className={styles.timePosted}>{formatPostedDate(job.createdAt)}</span>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
-          </div>
+          )}
         </div>
       </section>
     </div>

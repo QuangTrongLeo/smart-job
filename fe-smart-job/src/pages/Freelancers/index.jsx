@@ -2,15 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { freelancerService } from '~/services/freelancerService';
 import { favoriteService } from '~/services/favoriteService'; // Import thêm favoriteService
+import { chatService } from '~/services/chatService';
 import styles from './Freelancers.module.scss';
 
 const DEFAULT_AVATAR = 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
+const getConversationId = (conversation) => conversation?.id || conversation?.conversationId;
 
 export function Freelancers() {
   const [freelancers, setFreelancers] = useState([]);
   const [favoriteProfileIds, setFavoriteProfileIds] = useState(new Set()); // Lưu danh sách Freelancer Profile ID đã yêu thích
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [messagingProfileId, setMessagingProfileId] = useState(null);
+  const [messageError, setMessageError] = useState('');
 
   const navigate = useNavigate();
 
@@ -57,6 +61,32 @@ export function Freelancers() {
   const handleViewProfile = (id) => {
     if (id) {
       navigate(`/freelancer/${id}`);
+    }
+  };
+
+  const handleContact = async (e, profile) => {
+    e.stopPropagation();
+    const partnerId = profile?.user?.id;
+
+    if (!partnerId || messagingProfileId) {
+      setMessageError('Không tìm thấy thông tin tài khoản Freelancer.');
+      return;
+    }
+
+    setMessagingProfileId(profile.id);
+    setMessageError('');
+    try {
+      const response = await chatService.getOrCreateConversation({ partnerId });
+      const conversation = response?.data?.data || response?.data;
+      const conversationId = getConversationId(conversation);
+      if (!conversationId) throw new Error('Missing conversation id');
+
+      navigate(`/messages?conversationId=${conversationId}`, { state: { conversation } });
+    } catch (requestError) {
+      console.error('Lỗi khi khởi tạo cuộc trò chuyện:', requestError);
+      setMessageError(requestError.response?.data?.message || 'Không thể mở cuộc trò chuyện. Vui lòng thử lại.');
+    } finally {
+      setMessagingProfileId(null);
     }
   };
 
@@ -139,6 +169,16 @@ export function Freelancers() {
             </div>
           )}
 
+          {messageError && !loading && (
+            <div className={styles.errorState} role="alert">
+              <i className="bi bi-exclamation-triangle"></i>
+              <span>{messageError}</span>
+              <button type="button" onClick={() => setMessageError('')} aria-label="Đóng thông báo">
+                <i className="bi bi-x-lg"></i>
+              </button>
+            </div>
+          )}
+
           {!loading && !error && (
             <div className={styles.bentoGrid}>
               {freelancers.map((profile) => {
@@ -210,12 +250,11 @@ export function Freelancers() {
                     <div className={styles.cardActions}>
                       <button 
                         className={styles.btnContact}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          alert(`Liên hệ với ${name}`);
-                        }}
+                        onClick={(e) => handleContact(e, profile)}
+                        disabled={messagingProfileId !== null}
                       >
-                        Liên hệ
+                        <i className={messagingProfileId === profile.id ? 'bi bi-hourglass-split' : 'bi bi-chat-dots-fill'}></i>
+                        {messagingProfileId === profile.id ? 'Đang mở...' : 'Liên hệ'}
                       </button>
                       <button 
                         className={styles.btnProfile} 

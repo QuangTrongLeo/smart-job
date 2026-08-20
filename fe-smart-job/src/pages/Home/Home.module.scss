@@ -211,10 +211,29 @@
   border: 1px solid #c3c6d7;
   display: flex;
   flex-direction: column;
+  min-height: 220px;
+  color: inherit;
+  text-decoration: none;
   transition: box-shadow 0.2s ease;
 
   &:hover {
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    border-color: #9aa8c7;
+  }
+}
+
+.jobsState {
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #434655;
+  font-size: 15px;
+
+  i {
+    color: #004ac6;
+    font-size: 20px;
   }
 }
 
@@ -229,11 +248,19 @@
     height: 40px;
     border-radius: 8px;
     background-color: #dae2fd;
+    object-fit: cover;
     display: flex;
     align-items: center;
     justify-content: center;
     color: #004ac6;
     font-weight: 700;
+  }
+
+  .companyInfo {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 8px;
   }
 
   .jobTitle {
@@ -257,6 +284,18 @@
       color: #004ac6;
     }
   }
+
+  .cardArrow {
+    flex-shrink: 0;
+    color: #737686;
+    font-size: 16px;
+    transition: color 0.2s ease, transform 0.2s ease;
+  }
+}
+
+.jobCard:hover .cardArrow {
+  color: #004ac6;
+  transform: translate(2px, -2px);
 }
 
 .cardTags {
