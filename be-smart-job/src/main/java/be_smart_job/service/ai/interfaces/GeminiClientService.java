@@ -1,4 +1,8 @@
 package be_smart_job.service.ai.interfaces;
 
-public class GeminiClientService {
+import java.util.List;
+
+public interface GeminiClientService {
+    String generateJsonContent(String prompt);
+    List<Double> generateEmbedding(String text);
 }

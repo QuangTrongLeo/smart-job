@@ -1,4 +1,7 @@
 package be_smart_job.service.ai.interfaces;
 
-public class JobAiService {
+import be_smart_job.entity.Job;
+
+public interface JobAiService {
+    void processAndEnrichJob(Job job);
 }
