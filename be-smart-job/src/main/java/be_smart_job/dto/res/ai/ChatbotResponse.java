@@ -13,17 +13,6 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class ChatbotResponse {
-
-    private String reply; // Câu trả lời/tư vấn bằng chữ từ AI
-    private List<RecommendedJobItem> recommendedJobs; // Danh sách JobResponse đầy đủ
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Builder
-    public static class RecommendedJobItem {
-        private JobResponse job;
-        private Double matchScore;
-        private String reason;
-    }
+    private String text;
+    private List<JobResponse> recommendedJobs;
 }

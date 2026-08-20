@@ -1,5 +1,6 @@
 package be_smart_job.service.social.impl;
 
+import be_smart_job.dto.req.social.GetOrCreateConversationRequest;
 import be_smart_job.dto.req.social.SendMessageRequest;
 import be_smart_job.dto.res.social.ConversationResponse;
 import be_smart_job.dto.res.social.MessageResponse;
@@ -33,6 +34,34 @@ public class ChatServiceImpl implements ChatService {
     private final ConversationMapper conversationMapper;
 
     @Override
+    public ConversationResponse getOrCreateConversation(GetOrCreateConversationRequest request) {
+        String currentUserId = SecurityUtils.getCurrentUserId();
+        String partnerId = request.getPartnerId();
+
+        if (currentUserId.equals(partnerId)) {
+            throw new IllegalArgumentException("Không thể tự tạo cuộc trò chuyện với chính mình");
+        }
+
+        userRepository.findById(partnerId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy người dùng với ID: " + partnerId));
+
+        // Phân định ai là Client, ai là Freelancer
+        String clientId = SecurityUtils.hasRole("CLIENT") ? currentUserId : partnerId;
+        String freelancerId = SecurityUtils.hasRole("FREELANCER") ? currentUserId : partnerId;
+
+        Conversation conversation = findExistingConversation(clientId, freelancerId, request.getJobId())
+                .orElseGet(() -> conversationRepository.save(
+                        Conversation.builder()
+                                .clientId(clientId)
+                                .freelancerId(freelancerId)
+                                .jobId(request.getJobId())
+                                .build()
+                ));
+
+        return mapToConversationResponse(conversation, currentUserId);
+    }
+
+    @Override
     public MessageResponse sendMessage(SendMessageRequest request) {
         String currentUserId = SecurityUtils.getCurrentUserId();
         String receiverId = request.getReceiverId();
@@ -41,22 +70,26 @@ public class ChatServiceImpl implements ChatService {
             throw new IllegalArgumentException("Không thể tự gửi tin nhắn cho chính mình");
         }
 
-        User receiver = userRepository.findById(receiverId)
+        userRepository.findById(receiverId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy người nhận với ID: " + receiverId));
 
-        // Phân định ai là Client, ai là Freelancer
         String clientId = SecurityUtils.hasRole("CLIENT") ? currentUserId : receiverId;
         String freelancerId = SecurityUtils.hasRole("FREELANCER") ? currentUserId : receiverId;
 
-        // Tìm hoặc tạo Conversation
-        Conversation conversation = getOrCreateConversation(clientId, freelancerId, request.getJobId());
+        Conversation conversation = findExistingConversation(clientId, freelancerId, request.getJobId())
+                .orElseGet(() -> conversationRepository.save(
+                        Conversation.builder()
+                                .clientId(clientId)
+                                .freelancerId(freelancerId)
+                                .jobId(request.getJobId())
+                                .build()
+                ));
 
         Instant now = Instant.now();
         conversation.setLastMessage(request.getContent());
         conversation.setLastMessageAt(now);
         conversationRepository.save(conversation);
 
-        // Lưu Message
         Message message = Message.builder()
                 .conversationId(conversation.getId())
                 .jobId(request.getJobId())
@@ -74,27 +107,12 @@ public class ChatServiceImpl implements ChatService {
     public List<ConversationResponse> getMyConversations() {
         String currentUserId = SecurityUtils.getCurrentUserId();
 
-        List<Conversation> conversations = conversationRepository
-                .findByClientIdOrFreelancerIdOrderByLastMessageAtDesc(currentUserId, currentUserId);
+        // Chỉ lấy những conversation có lastMessage != null (đã từng gửi tin nhắn qua lại)
+        List<Conversation> conversations = conversationRepository.findActiveConversationsByUserId(currentUserId);
 
-        return conversations.stream().map(conv -> {
-            ConversationResponse response = conversationMapper.toResponse(conv);
-
-            String partnerId = currentUserId.equals(conv.getClientId()) ? conv.getFreelancerId() : conv.getClientId();
-            response.setPartnerId(partnerId);
-
-            userRepository.findById(partnerId).ifPresent(partner -> {
-                String fullName = (partner.getLastName() != null ? partner.getLastName() + " " : "") +
-                        (partner.getFirstName() != null ? partner.getFirstName() : "");
-                response.setPartnerName(fullName.trim());
-                response.setPartnerAvatar(partner.getAvatarUrl());
-            });
-
-            long unread = messageRepository.countByConversationIdAndReceiverIdAndIsReadFalse(conv.getId(), currentUserId);
-            response.setUnreadCount(unread);
-
-            return response;
-        }).toList();
+        return conversations.stream()
+                .map(conv -> mapToConversationResponse(conv, currentUserId))
+                .toList();
     }
 
     @Override
@@ -122,20 +140,29 @@ public class ChatServiceImpl implements ChatService {
         }
     }
 
-    private Conversation getOrCreateConversation(String clientId, String freelancerId, String jobId) {
-        Optional<Conversation> existing;
+    private Optional<Conversation> findExistingConversation(String clientId, String freelancerId, String jobId) {
         if (jobId != null && !jobId.isBlank()) {
-            existing = conversationRepository.findByClientIdAndFreelancerIdAndJobId(clientId, freelancerId, jobId);
-        } else {
-            existing = conversationRepository.findByClientIdAndFreelancerId(clientId, freelancerId);
+            return conversationRepository.findByClientIdAndFreelancerIdAndJobId(clientId, freelancerId, jobId);
         }
+        return conversationRepository.findByClientIdAndFreelancerId(clientId, freelancerId);
+    }
 
-        return existing.orElseGet(() -> conversationRepository.save(
-                Conversation.builder()
-                        .clientId(clientId)
-                        .freelancerId(freelancerId)
-                        .jobId(jobId)
-                        .build()
-        ));
+    private ConversationResponse mapToConversationResponse(Conversation conv, String currentUserId) {
+        ConversationResponse response = conversationMapper.toResponse(conv);
+
+        String partnerId = currentUserId.equals(conv.getClientId()) ? conv.getFreelancerId() : conv.getClientId();
+        response.setPartnerId(partnerId);
+
+        userRepository.findById(partnerId).ifPresent(partner -> {
+            String fullName = ((partner.getLastName() != null ? partner.getLastName() : "") + " " +
+                    (partner.getFirstName() != null ? partner.getFirstName() : "")).trim();
+            response.setPartnerName(fullName.isEmpty() ? partner.getUsername() : fullName);
+            response.setPartnerAvatar(partner.getAvatarUrl());
+        });
+
+        long unread = messageRepository.countByConversationIdAndReceiverIdAndIsReadFalse(conv.getId(), currentUserId);
+        response.setUnreadCount(unread);
+
+        return response;
     }
 }

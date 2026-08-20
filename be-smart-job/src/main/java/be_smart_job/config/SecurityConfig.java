@@ -37,11 +37,7 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
-                        // Auth endpoints
                         .requestMatchers("/auth/**").permitAll()
-
-                        // Các API cần đăng nhập (đặc tả trước)
                         .requestMatchers(
                                 "/users/my-profile",
                                 "/jobs/my-jobs",
@@ -49,8 +45,7 @@ public class SecurityConfig {
                                 "/favorites/**",
                                 "/chat/**"
                         ).authenticated()
-
-                        // Các API Public GET (đặc tả sau)
+                        .requestMatchers(HttpMethod.POST, "/ai/**").permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/users/**",
                                 "/categories/**",
@@ -58,7 +53,6 @@ public class SecurityConfig {
                                 "/enums/**",
                                 "/freelancers/**"
                         ).permitAll()
-
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
