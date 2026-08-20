@@ -1,12 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { favoriteService } from '~/services';
 import styles from './FavoriteFreelancers.module.scss';
+
+// Hàm hỗ trợ hiển thị Họ tên từ UserResponse
+const getFullName = (user) => {
+  if (!user) return 'Chưa cập nhật tên';
+  const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+  return fullName || user.username || user.email || 'Chưa cập nhật tên';
+};
 
 function FavoriteFreelancers() {
   const [favoriteFreelancers, setFavoriteFreelancers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchFavoriteFreelancers();
@@ -16,7 +24,7 @@ function FavoriteFreelancers() {
     try {
       setLoading(true);
       const res = await favoriteService.getMyFavoriteFreelancers();
-      const data = res?.data || res;
+      const data = res?.data?.data || res?.data || res;
       setFavoriteFreelancers(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Lỗi khi tải danh sách Freelancer yêu thích:', err);
@@ -26,15 +34,29 @@ function FavoriteFreelancers() {
     }
   };
 
-  const handleToggleFavorite = async (freelancerUserId) => {
+  // Sử dụng Freelancer Profile ID (profile.id) để thực hiện toggle
+  const handleToggleFavorite = async (e, freelancerProfileId) => {
+    // Ngăn sự kiện click lan ra ngoài làm kích hoạt chuyển trang của thẻ cha
+    e.stopPropagation();
+
+    if (!freelancerProfileId) return;
+
     try {
-      await favoriteService.toggleFavoriteFreelancer(freelancerUserId);
+      await favoriteService.toggleFavoriteFreelancer(freelancerProfileId);
+      // Lọc bỏ freelancer vừa xóa theo profile.id
       setFavoriteFreelancers((prev) =>
-        prev.filter((item) => item.freelancer?.userId !== freelancerUserId)
+        prev.filter((item) => item.freelancer?.id !== freelancerProfileId)
       );
     } catch (err) {
       console.error('Lỗi khi xóa Freelancer khỏi danh sách yêu thích:', err);
       alert('Có lỗi xảy ra khi thực hiện thao tác!');
+    }
+  };
+
+  // Chuyển hướng sang trang chi tiết Freelancer theo profile.id
+  const handleCardClick = (profileId) => {
+    if (profileId) {
+      navigate(`/freelancer/${profileId}`);
     }
   };
 
@@ -81,26 +103,37 @@ function FavoriteFreelancers() {
         <div className={styles.freelancerGrid}>
           {favoriteFreelancers.map((item) => {
             const profile = item.freelancer || {};
+            const user = profile.user || {};
+            const fullName = getFullName(user);
+
             return (
-              <div key={item.id || profile.id} className={styles.freelancerCard}>
+              <div
+                key={item.id || profile.id}
+                className={styles.freelancerCard}
+                onClick={() => handleCardClick(profile.id)}
+                style={{ cursor: 'pointer' }}
+              >
                 <div>
                   <div className={styles.cardTop}>
-                    {profile.avatarUrl ? (
+                    {user.avatarUrl ? (
                       <img
-                        src={profile.avatarUrl}
-                        alt={profile.fullName}
+                        src={user.avatarUrl}
+                        alt={fullName}
                         className={styles.avatarImg}
                       />
                     ) : (
                       <div className={styles.avatarFallback}>
-                        {profile.fullName ? profile.fullName.charAt(0).toUpperCase() : 'F'}
+                        {fullName ? fullName.charAt(0).toUpperCase() : 'F'}
                       </div>
                     )}
 
                     <div className={styles.infoMeta}>
                       <div className={styles.nameRow}>
-                        <Link to={`/freelancer/${profile.id}`}>
-                          {profile.fullName || 'Chưa cập nhật tên'}
+                        <Link
+                          to={`/freelancer/${profile.id}`}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {fullName}
                         </Link>
                         {profile.isVerified && (
                           <i
@@ -119,7 +152,7 @@ function FavoriteFreelancers() {
                     </div>
 
                     <button
-                      onClick={() => handleToggleFavorite(profile.userId)}
+                      onClick={(e) => handleToggleFavorite(e, profile.id)}
                       className={styles.btnClose}
                       title="Bỏ lưu Freelancer này"
                     >
@@ -148,13 +181,13 @@ function FavoriteFreelancers() {
                     Đánh giá:{' '}
                     <strong>
                       <i className="bi bi-star-fill me-1" />
-                      {profile.rating ? profile.rating.toFixed(1) : '5.0'}
+                      {profile.rating != null ? profile.rating.toFixed(1) : '5.0'}
                     </strong>
-                    {profile.reviewCount ? ` (${profile.reviewCount})` : ''}
+                    {profile.reviewCount != null ? ` (${profile.reviewCount})` : ''}
                   </span>
                   <span className={styles.rateText}>
                     {profile.hourlyRate
-                      ? `${profile.hourlyRate.toLocaleString()} VNĐ/giờ`
+                      ? `$${profile.hourlyRate} / giờ`
                       : 'Thỏa thuận'}
                   </span>
                 </div>

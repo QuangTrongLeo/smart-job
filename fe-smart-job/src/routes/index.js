@@ -44,7 +44,7 @@ const freelancerRoutes = [
 
 const clientRoutes = [
   { path: config.routes.manage_jobs, component: ClientJobManagement },
-  
+  { path: config.routes.favorite_freelancers, component: FavoriteFreelancers },
 ];
 
 // 4. Routes dành cho Admin (Mặc định dùng DefaultLayout có Sidebar)

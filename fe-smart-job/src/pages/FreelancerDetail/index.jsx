@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { freelancerService } from '~/services/freelancerService';
+import { freelancerService, favoriteService } from '~/services';
 import styles from './FreelancerDetail.module.scss';
 
 const DEFAULT_AVATAR = 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
@@ -20,8 +20,8 @@ const getFullName = (user) => {
 const formatDate = (dateStr) => {
   if (!dateStr) return '';
   const parsed = new Date(dateStr);
-  return Number.isNaN(parsed.getTime()) 
-    ? dateStr 
+  return Number.isNaN(parsed.getTime())
+    ? dateStr
     : parsed.toLocaleDateString('vi-VN', { month: '2-digit', year: 'numeric' });
 };
 
@@ -39,18 +39,43 @@ export function FreelancerDetail() {
       return;
     }
 
-    const fetchProfile = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
         setError('');
-        const response = await freelancerService.getProfileById(id);
-        const data = response?.data?.data || response?.data || null;
-        
+
+        // 1. Tải hồ sơ Freelancer
+        const profileRes = await freelancerService.getProfileById(id);
+        const data = profileRes?.data?.data || profileRes?.data || null;
+
         if (!data) {
           setError('Không tìm thấy thông tin Freelancer.');
-        } else {
-          setProfile(data);
+          return;
         }
+
+        setProfile(data);
+
+        // 2. Tải danh sách yêu thích của Client để kiểm tra trạng thái ban đầu
+        try {
+          const favRes = await favoriteService.getMyFavoriteFreelancers();
+          const favList = favRes?.data?.data || favRes?.data || [];
+
+          // So sánh chuẩn theo Freelancer Profile ID hoặc User ID với danh sách đã lưu
+          const targetUserId = data.user?.id;
+          const targetProfileId = data.id;
+
+          const exists = Array.isArray(favList) && favList.some((item) => {
+            const favUserId = item?.freelancer?.user?.id;
+            const favProfileId = item?.freelancer?.id;
+            return (targetProfileId && favProfileId === targetProfileId) || (targetUserId && favUserId === targetUserId);
+          });
+
+          setIsSaved(exists);
+        } catch (favErr) {
+          // Bỏ qua lỗi nếu user chưa đăng nhập hoặc không có quyền Client
+          console.warn('Không thể kiểm tra danh sách yêu thích:', favErr);
+        }
+
       } catch (err) {
         console.error('Lỗi khi tải thông tin Freelancer:', err);
         setError('Không thể tải hồ sơ Freelancer. Vui lòng thử lại sau.');
@@ -59,8 +84,33 @@ export function FreelancerDetail() {
       }
     };
 
-    fetchProfile();
+    fetchData();
   }, [id]);
+
+  // Xử lý Toggle Lưu / Bỏ lưu Freelancer
+  const handleToggleFavorite = async () => {
+    // ƯU TIÊN LẤY FreelancerProfile ID (profile.id) vì Backend gọi profileRepository.existsById
+    const targetProfileId = profile?.id || id;
+    if (!targetProfileId) return;
+
+    // Optimistic Update: Cập nhật UI ngay lập tức
+    const previousState = isSaved;
+    setIsSaved(!previousState);
+
+    try {
+      const res = await favoriteService.toggleFavoriteFreelancer(targetProfileId);
+      const isFavorited = res?.data?.data ?? res?.data;
+      
+      // Đồng bộ lại chuẩn với trạng thái trả về từ Backend
+      if (typeof isFavorited === 'boolean') {
+        setIsSaved(isFavorited);
+      }
+    } catch (err) {
+      console.error('Lỗi khi thực hiện toggle favorite:', err);
+      // Revert lại trạng thái cũ nếu API gọi lỗi
+      setIsSaved(previousState);
+    }
+  };
 
   if (loading) {
     return <div className={styles.stateCard}>Đang tải thông tin Freelancer...</div>;
@@ -164,7 +214,7 @@ export function FreelancerDetail() {
 
           <div className={styles.buttonGroup}>
             <button
-              onClick={() => setIsSaved((prev) => !prev)}
+              onClick={handleToggleFavorite}
               className={`${styles.btnBookmark} ${isSaved ? styles.active : ''}`}
             >
               <i className={`bi ${isSaved ? 'bi-bookmark-fill' : 'bi-bookmark'}`}></i>

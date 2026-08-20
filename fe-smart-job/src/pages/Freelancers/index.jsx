@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom'; // 1. Import useNavigate
+import { useNavigate } from 'react-router-dom';
 import { freelancerService } from '~/services/freelancerService';
+import { favoriteService } from '~/services/favoriteService'; // Import thêm favoriteService
 import styles from './Freelancers.module.scss';
 
 const DEFAULT_AVATAR = 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
 
 export function Freelancers() {
   const [freelancers, setFreelancers] = useState([]);
+  const [favoriteProfileIds, setFavoriteProfileIds] = useState(new Set()); // Lưu danh sách Freelancer Profile ID đã yêu thích
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const navigate = useNavigate(); // 2. Khởi tạo hook navigate
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchFreelancers();
@@ -20,9 +22,23 @@ export function Freelancers() {
     try {
       setLoading(true);
       setError(null);
+
+      // 1. Tải danh sách tất cả Freelancers
       const res = await freelancerService.getAllProfiles();
       const data = res.data?.data || res.data || [];
       setFreelancers(data);
+
+      // 2. Tải danh sách yêu thích của Client để kiểm tra trạng thái ban đầu
+      try {
+        const favRes = await favoriteService.getMyFavoriteFreelancers();
+        const favList = favRes?.data?.data || favRes?.data || [];
+        if (Array.isArray(favList)) {
+          const favIds = new Set(favList.map((item) => item.freelancer?.id).filter(Boolean));
+          setFavoriteProfileIds(favIds);
+        }
+      } catch (favErr) {
+        console.warn('Không thể tải danh sách yêu thích (người dùng chưa đăng nhập hoặc không có quyền Client):', favErr);
+      }
     } catch (err) {
       console.error('Lỗi khi tải danh sách freelancer:', err);
       setError('Không thể kết nối đến máy chủ. Vui lòng thử lại sau.');
@@ -37,9 +53,46 @@ export function Freelancers() {
     return fullName || user.username || user.email;
   };
 
-  // 3. Hàm chuyển hướng sang trang chi tiết
+  // Chuyển hướng sang trang chi tiết Freelancer
   const handleViewProfile = (id) => {
-    navigate(`/freelancer/${id}`);
+    if (id) {
+      navigate(`/freelancer/${id}`);
+    }
+  };
+
+  // Xử lý Toggle Lưu / Bỏ lưu Freelancer theo profile.id
+  const handleToggleFavorite = async (e, profileId) => {
+    e.stopPropagation(); // Ngăn chặn sự kiện click làm chuyển trang
+    if (!profileId) return;
+
+    const isCurrentlySaved = favoriteProfileIds.has(profileId);
+
+    // Optimistic Update: Cập nhật giao diện ngay lập tức
+    setFavoriteProfileIds((prev) => {
+      const next = new Set(prev);
+      if (isCurrentlySaved) {
+        next.delete(profileId);
+      } else {
+        next.add(profileId);
+      }
+      return next;
+    });
+
+    try {
+      await favoriteService.toggleFavoriteFreelancer(profileId);
+    } catch (err) {
+      console.error('Lỗi khi thực hiện toggle favorite:', err);
+      // Revert lại trạng thái cũ nếu API gặp lỗi
+      setFavoriteProfileIds((prev) => {
+        const next = new Set(prev);
+        if (isCurrentlySaved) {
+          next.add(profileId);
+        } else {
+          next.delete(profileId);
+        }
+        return next;
+      });
+    }
   };
 
   return (
@@ -92,9 +145,15 @@ export function Freelancers() {
                 const user = profile.user || {};
                 const name = getFullName(user);
                 const avatar = user.avatarUrl || DEFAULT_AVATAR;
+                const isSaved = favoriteProfileIds.has(profile.id);
 
                 return (
-                  <article key={profile.id} className={styles.freelancerCard}>
+                  <article 
+                    key={profile.id} 
+                    className={styles.freelancerCard}
+                    onClick={() => handleViewProfile(profile.id)}
+                    style={{ cursor: 'pointer' }}
+                  >
                     <div className={styles.cardHeader}>
                       <img className={styles.avatar} src={avatar} alt={name} />
                       <div className={styles.info}>
@@ -103,8 +162,15 @@ export function Freelancers() {
                             <h3>{name}</h3>
                             <p className={styles.role}>{profile.title || 'Freelancer'}</p>
                           </div>
-                          <button className={styles.favBtn} aria-label="Lưu freelancer">
-                            <i className="bi bi-heart"></i>
+                          
+                          {/* Nút Toggle Yêu thích */}
+                          <button 
+                            className={`${styles.favBtn} ${isSaved ? styles.favActive : ''}`} 
+                            aria-label="Lưu freelancer"
+                            onClick={(e) => handleToggleFavorite(e, profile.id)}
+                            title={isSaved ? 'Bỏ lưu Freelancer' : 'Lưu Freelancer'}
+                          >
+                            <i className={`bi ${isSaved ? 'bi-heart-fill' : 'bi-heart'}`}></i>
                           </button>
                         </div>
                         <div className={styles.ratingRow}>
@@ -141,12 +207,22 @@ export function Freelancers() {
                       </div>
                     </div>
 
-                    {/* 4. Thêm sự kiện chuyển hướng onClick */}
                     <div className={styles.cardActions}>
-                      <button className={styles.btnContact}>Liên hệ</button>
+                      <button 
+                        className={styles.btnContact}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          alert(`Liên hệ với ${name}`);
+                        }}
+                      >
+                        Liên hệ
+                      </button>
                       <button 
                         className={styles.btnProfile} 
-                        onClick={() => handleViewProfile(profile.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleViewProfile(profile.id);
+                        }}
                       >
                         Xem hồ sơ
                       </button>
