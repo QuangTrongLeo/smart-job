@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { jobService, categoryService, enumService, aiService } from '~/services';
+import AiMatchWidget from '~/components/AiMatchWidget/AiMatchWidget';
 import styles from './ClientJobManagement.module.scss';
 
 const INITIAL_FORM_STATE = {
@@ -43,6 +44,28 @@ const ENUM_LABELS = {
 
 const getEnumLabel = (val) => ENUM_LABELS[val] || val;
 
+const getFreelancerId = (candidate) => (
+  candidate?.freelancerId ||
+  candidate?.freelancer?.id ||
+  candidate?.freelancer?.user?.id ||
+  candidate?.applicant?.id ||
+  candidate?.applicant?.user?.id ||
+  candidate?.user?.id ||
+  candidate?.profile?.user?.id ||
+  candidate?.profileId
+);
+
+const getCandidateName = (candidate, index) => {
+  const user = candidate?.freelancer?.user || candidate?.applicant?.user || candidate?.user || candidate?.profile?.user;
+  const fullName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim();
+  return fullName || user?.username || user?.email || candidate?.freelancer?.title || `Ứng viên ${index + 1}`;
+};
+
+const getJobCandidates = (job) => {
+  const candidates = job?.applications || job?.applicants || job?.candidates || [];
+  return Array.isArray(candidates) ? candidates : [];
+};
+
 function ClientJobManagement() {
   const [jobs, setJobs] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -64,6 +87,7 @@ function ClientJobManagement() {
   const [formData, setFormData] = useState(INITIAL_FORM_STATE);
   const [deleteId, setDeleteId] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
+  const [selectedMatch, setSelectedMatch] = useState(null);
 
   useEffect(() => {
     fetchMyJobs();
@@ -374,6 +398,13 @@ function ClientJobManagement() {
                         >
                           Xóa
                         </button>
+                        <button
+                          className={styles.btnAiMatch}
+                          title="Xem đánh giá AI"
+                          onClick={() => setSelectedMatch({ job, candidates: getJobCandidates(job) })}
+                        >
+                          <i className="bi bi-stars" aria-hidden="true"></i> Đánh giá AI
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -383,6 +414,51 @@ function ClientJobManagement() {
           </div>
         )}
       </div>
+
+      {selectedMatch && (
+        <div className={styles.modalOverlay} onClick={() => setSelectedMatch(null)}>
+          <div className={styles.matchModal} onClick={(event) => event.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3>Đánh giá AI: {selectedMatch.job.title}</h3>
+              <button className={styles.closeBtn} onClick={() => setSelectedMatch(null)} aria-label="Đóng">
+                &times;
+              </button>
+            </div>
+
+            {selectedMatch.candidates.length > 0 ? (
+              <div className={styles.matchModalBody}>
+                <label htmlFor="candidate-select">Chọn ứng viên</label>
+                <select
+                  id="candidate-select"
+                  value={selectedMatch.freelancerId || ''}
+                  onChange={(event) => setSelectedMatch((prev) => ({ ...prev, freelancerId: event.target.value }))}
+                >
+                  <option value="">Chọn ứng viên để phân tích</option>
+                  {selectedMatch.candidates.map((candidate, index) => {
+                    const candidateId = getFreelancerId(candidate);
+                    return candidateId ? (
+                      <option key={candidateId} value={candidateId}>
+                        {getCandidateName(candidate, index)}
+                      </option>
+                    ) : null;
+                  })}
+                </select>
+                {selectedMatch.freelancerId && (
+                  <AiMatchWidget
+                    jobId={selectedMatch.job.id}
+                    freelancerId={selectedMatch.freelancerId}
+                  />
+                )}
+              </div>
+            ) : (
+              <div className={styles.matchEmptyState}>
+                <i className="bi bi-person-exclamation" aria-hidden="true"></i>
+                <p>Chưa có ứng viên để thực hiện đánh giá AI cho công việc này.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Modal Form */}
       {showModal && (

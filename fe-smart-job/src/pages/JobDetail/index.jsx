@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { jobService, favoriteService, chatService } from '../../services';
+import { useAuth } from '../../context/AuthContext';
+import AiMatchWidget from '../../components/AiMatchWidget/AiMatchWidget';
 import styles from './JobDetail.module.scss';
 
 const DEFAULT_AVATAR =
@@ -9,6 +11,7 @@ const DEFAULT_AVATAR =
 function JobDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -357,44 +360,7 @@ function JobDetail() {
             </div>
           </div>
 
-          {/* AI Match Score Component */}
-          <div className={styles.aiMatchCard}>
-            <div className={styles.watermarkIcon}>
-              <i className="bi bi-stars"></i>
-            </div>
-            <div className={styles.aiContent}>
-              <div className={styles.aiHeader}>
-                <i className="bi bi-cpu"></i>
-                <h3>AI Match Score</h3>
-              </div>
-              <div className={styles.scoreDisplay}>
-                <span className={styles.scoreNumber}>92%</span>
-                <span className={styles.scoreLabel}>Độ phù hợp</span>
-              </div>
-
-              <div className={styles.progressBarTrack}>
-                <div
-                  className={styles.progressBarFill}
-                  style={{ width: '92%' }}
-                ></div>
-              </div>
-
-              <div className={styles.aiDetails}>
-                <p className={styles.aiPoint}>
-                  <i className={`bi bi-check-circle-fill ${styles.iconCheck}`}></i>
-                  <span>
-                    <strong>Kỹ năng khớp cao:</strong> Khớp hầu hết các kỹ năng bắt buộc.
-                  </span>
-                </p>
-                <p className={styles.aiPoint}>
-                  <i className={`bi bi-check-circle-fill ${styles.iconCheck}`}></i>
-                  <span>
-                    <strong>Kinh nghiệm:</strong> Phù hợp với mức {job.experienceLevel}.
-                  </span>
-                </p>
-              </div>
-            </div>
-          </div>
+          <AiMatchWidget jobId={id || job.id} />
         </div>
       </main>
     </div>

@@ -161,7 +161,8 @@
 }
 
 .btnIconEdit,
-.btnIconDelete {
+.btnIconDelete,
+.btnAiMatch {
   border: none;
   background: none;
   font-size: 0.825rem;
@@ -182,6 +183,14 @@
   color: #dc2626;
   &:hover {
     background-color: #fef2f2;
+  }
+}
+
+.btnAiMatch {
+  color: #7c3aed;
+
+  &:hover {
+    background-color: #f5f3ff;
   }
 }
 
@@ -379,4 +388,55 @@
   justify-content: center;
   gap: 0.75rem;
   margin-top: 1.25rem;
+}
+
+.matchModal {
+  background: #ffffff;
+  border-radius: 10px;
+  width: 100%;
+  max-width: 620px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.matchModalBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.25rem;
+
+  label {
+    color: #475569;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  select {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 0.875rem;
+
+    &:focus {
+      border-color: #2563eb;
+      outline: none;
+    }
+  }
+}
+
+.matchEmptyState {
+  padding: 2rem 1.25rem;
+  color: #64748b;
+  text-align: center;
+
+  i {
+    color: #94a3b8;
+    font-size: 2rem;
+  }
+
+  p {
+    margin: 0.75rem 0 0;
+    font-size: 0.875rem;
+  }
 }

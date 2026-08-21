@@ -31,4 +31,10 @@ export const aiService = {
       },
     });
   },
+
+  /**
+   * Ghép nối freelancer với công việc bằng AI
+   * @param {Object} data - Dữ liệu JobMatchReq
+   */
+  matchFreelancerToJob: (data) => axiosClient.post('/ai/match', data),
 };
