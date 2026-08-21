@@ -11,5 +11,4 @@ import java.util.Optional;
 public interface RoadmapRepository extends MongoRepository<Roadmap, String> {
     Optional<Roadmap> findByMatchId(String matchId);
     List<Roadmap> findByFreelancerId(String freelancerId);
-    Optional<Roadmap> findByFreelancerIdAndJobId(String freelancerId, String jobId);
 }
