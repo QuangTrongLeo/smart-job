@@ -1,0 +1,161 @@
+package be_smart_job.service.job.impl;
+
+import be_smart_job.dto.req.job.JobProposalRequest;
+import be_smart_job.dto.res.identity.UserResponse;
+import be_smart_job.dto.res.job.FreelancerProfileResponse;
+import be_smart_job.dto.res.job.JobProposalResponse;
+import be_smart_job.entity.FreelancerProfile;
+import be_smart_job.entity.Job;
+import be_smart_job.entity.JobProposal;
+import be_smart_job.entity.User;
+import be_smart_job.enums.JobStatus;
+import be_smart_job.enums.ProposalStatus;
+import be_smart_job.mapper.identity.UserMapper;
+import be_smart_job.mapper.job.JobProposalMapper;
+import be_smart_job.repository.identity.UserRepository;
+import be_smart_job.repository.job.FreelancerProfileRepository;
+import be_smart_job.repository.job.JobProposalRepository;
+import be_smart_job.repository.job.JobRepository;
+import be_smart_job.service.job.interfaces.FreelancerProfileService;
+import be_smart_job.service.job.interfaces.JobProposalService;
+import be_smart_job.util.SecurityUtils;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class JobProposalServiceImpl implements JobProposalService {
+
+    private final JobProposalRepository proposalRepository;
+    private final JobRepository jobRepository;
+    private final FreelancerProfileRepository profileRepository;
+    private final FreelancerProfileService profileService;
+    private final UserRepository userRepository;
+    private final UserMapper userMapper;
+    private final JobProposalMapper proposalMapper;
+
+    @Override
+    public JobProposalResponse createProposal(JobProposalRequest request) {
+        validateRole("FREELANCER", "Chỉ Freelancer mới có thể gửi yêu cầu ứng tuyển!");
+
+        String currentUserId = SecurityUtils.getCurrentUserId();
+
+        Job job = jobRepository.findById(request.getJobId())
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy thông tin công việc!"));
+
+        if (job.getStatus() != JobStatus.OPEN) {
+            throw new IllegalArgumentException("Công việc này hiện không còn tiếp nhận thêm ứng tuyển!");
+        }
+
+        FreelancerProfile profile = profileRepository.findByUserId(currentUserId)
+                .orElseThrow(() -> new IllegalArgumentException("Bạn chưa tạo hồ sơ Freelancer, vui lòng tạo hồ sơ trước!"));
+
+        boolean existsPending = proposalRepository.existsByFreelancerUserIdAndJobIdAndStatus(
+                currentUserId, request.getJobId(), ProposalStatus.PENDING
+        );
+
+        if (existsPending) {
+            throw new IllegalArgumentException("Bạn đã gửi yêu cầu ứng tuyển cho công việc này rồi!");
+        }
+
+        JobProposal proposal = JobProposal.builder()
+                .jobId(job.getId())
+                .clientId(job.getClientId())
+                .freelancerUserId(currentUserId)
+                .freelancerProfileId(profile.getId())
+                .status(ProposalStatus.PENDING)
+                .build();
+
+        JobProposal saved = proposalRepository.save(proposal);
+        return mapToResponse(saved);
+    }
+
+    @Override
+    public List<JobProposalResponse> getMySentProposals() {
+        validateRole("FREELANCER", "Chỉ Freelancer mới có quyền truy cập danh sách đã ứng tuyển!");
+        String currentUserId = SecurityUtils.getCurrentUserId();
+
+        return proposalRepository.findByFreelancerUserIdOrderByCreatedAtDesc(currentUserId)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    @Override
+    public void cancelProposal(String proposalId) {
+        validateRole("FREELANCER", "Chỉ Freelancer mới có quyền hủy ứng tuyển!");
+        String currentUserId = SecurityUtils.getCurrentUserId();
+
+        JobProposal proposal = proposalRepository.findById(proposalId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy thông tin ứng tuyển!"));
+
+        if (!proposal.getFreelancerUserId().equals(currentUserId)) {
+            throw new AccessDeniedException("Bạn không có quyền hủy ứng tuyển này!");
+        }
+
+        proposal.setStatus(ProposalStatus.CANCELLED);
+        proposalRepository.save(proposal);
+    }
+
+    @Override
+    public List<JobProposalResponse> getProposalsByJob(String jobId, ProposalStatus status) {
+        validateRole("CLIENT", "Chỉ Client sở hữu công việc mới có thể xem danh sách ứng tuyển!");
+        String currentClientId = SecurityUtils.getCurrentUserId();
+
+        Job job = jobRepository.findById(jobId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy công việc!"));
+
+        if (!job.getClientId().equals(currentClientId)) {
+            throw new AccessDeniedException("Bạn không phải chủ sở hữu công việc này!");
+        }
+
+        List<JobProposal> proposals = (status != null)
+                ? proposalRepository.findByJobIdAndStatusOrderByCreatedAtDesc(jobId, status)
+                : proposalRepository.findByJobIdOrderByCreatedAtDesc(jobId);
+
+        return proposals.stream().map(this::mapToResponse).toList();
+    }
+
+    @Override
+    public JobProposalResponse respondToProposal(String proposalId, ProposalStatus status) {
+        validateRole("CLIENT", "Chỉ Client mới có quyền phản hồi ứng tuyển!");
+        String currentClientId = SecurityUtils.getCurrentUserId();
+
+        JobProposal proposal = proposalRepository.findById(proposalId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy thông tin ứng tuyển!"));
+
+        if (!proposal.getClientId().equals(currentClientId)) {
+            throw new AccessDeniedException("Bạn không có quyền xử lý lượt ứng tuyển này!");
+        }
+
+        if (proposal.getStatus() != ProposalStatus.PENDING) {
+            throw new IllegalArgumentException("Lượt ứng tuyển này đã được xử lý trước đó!");
+        }
+
+        if (status != ProposalStatus.ACCEPTED && status != ProposalStatus.REJECTED) {
+            throw new IllegalArgumentException("Trạng thái không hợp lệ (Chỉ nhận ACCEPTED hoặc REJECTED)!");
+        }
+
+        proposal.setStatus(status);
+        JobProposal updated = proposalRepository.save(proposal);
+
+        return mapToResponse(updated);
+    }
+
+    private void validateRole(String role, String errorMessage) {
+        if (!SecurityUtils.hasRole(role)) {
+            throw new AccessDeniedException(errorMessage);
+        }
+    }
+
+    private JobProposalResponse mapToResponse(JobProposal proposal) {
+        User clientUser = userRepository.findById(proposal.getClientId()).orElse(null);
+        UserResponse clientResponse = clientUser != null ? userMapper.toResponse(clientUser) : null;
+        FreelancerProfileResponse profileResponse = profileService.getProfileById(proposal.getFreelancerProfileId());
+
+        return proposalMapper.toResponse(proposal, clientResponse, profileResponse);
+    }
+}

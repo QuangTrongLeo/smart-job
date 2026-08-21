@@ -15,6 +15,7 @@ import be_smart_job.repository.social.MessageRepository;
 import be_smart_job.service.social.interfaces.ChatService;
 import be_smart_job.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +23,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ChatServiceImpl implements ChatService {
@@ -38,29 +40,40 @@ public class ChatServiceImpl implements ChatService {
         String currentUserId = resolveUserId(SecurityUtils.getCurrentUserId());
         String partnerId = resolveUserId(request.getPartnerId());
 
+        log.info("[CHAT] Request getOrCreateConversation between currentUserId: {} and partnerId: {}, jobId: {}",
+                currentUserId, partnerId, request.getJobId());
+
         if (currentUserId.equals(partnerId)) {
             throw new IllegalArgumentException("Không thể tự tạo cuộc trò chuyện với chính mình");
         }
 
-        String clientId;
-        String freelancerId;
+        // 1. Ưu tiên tìm cuộc trò chuyện đã tồn tại (tìm kiếm 2 chiều song phương)
+        Optional<Conversation> existingConv = findExistingConversation(currentUserId, partnerId, request.getJobId());
 
-        if (SecurityUtils.hasRole("FREELANCER") && !SecurityUtils.hasRole("CLIENT")) {
-            freelancerId = currentUserId;
-            clientId = partnerId;
+        Conversation conversation;
+        if (existingConv.isPresent()) {
+            conversation = existingConv.get();
+            log.info("[CHAT] Found existing conversation ID: {}", conversation.getId());
         } else {
-            clientId = currentUserId;
-            freelancerId = partnerId;
-        }
+            // 2. Nếu chưa tồn tại thì mới tạo mới
+            String clientId = partnerId;
+            String freelancerId = currentUserId;
 
-        Conversation conversation = findExistingConversation(clientId, freelancerId, request.getJobId())
-                .orElseGet(() -> conversationRepository.save(
-                        Conversation.builder()
-                                .clientId(clientId)
-                                .freelancerId(freelancerId)
-                                .jobId(request.getJobId())
-                                .build()
-                ));
+            // Nếu người gửi request chính là CLIENT (hoặc dựa trên Security Role) thì đảo ngược lại
+            if (SecurityUtils.hasRole("CLIENT") && !SecurityUtils.hasRole("FREELANCER")) {
+                clientId = currentUserId;
+                freelancerId = partnerId;
+            }
+
+            conversation = conversationRepository.save(
+                    Conversation.builder()
+                            .clientId(clientId)
+                            .freelancerId(freelancerId)
+                            .jobId(request.getJobId())
+                            .build()
+            );
+            log.info("[CHAT] Created new conversation ID: {}", conversation.getId());
+        }
 
         return mapToConversationResponse(conversation, currentUserId);
     }
@@ -74,25 +87,25 @@ public class ChatServiceImpl implements ChatService {
             throw new IllegalArgumentException("Không thể tự gửi tin nhắn cho chính mình");
         }
 
-        String clientId;
-        String freelancerId;
+        // Lấy hoặc tạo cuộc trò chuyện 2 chiều
+        Conversation conversation = findExistingConversation(currentUserId, receiverId, request.getJobId())
+                .orElseGet(() -> {
+                    String clientId = receiverId;
+                    String freelancerId = currentUserId;
 
-        if (SecurityUtils.hasRole("FREELANCER") && !SecurityUtils.hasRole("CLIENT")) {
-            freelancerId = currentUserId;
-            clientId = receiverId;
-        } else {
-            clientId = currentUserId;
-            freelancerId = receiverId;
-        }
+                    if (SecurityUtils.hasRole("CLIENT") && !SecurityUtils.hasRole("FREELANCER")) {
+                        clientId = currentUserId;
+                        freelancerId = receiverId;
+                    }
 
-        Conversation conversation = findExistingConversation(clientId, freelancerId, request.getJobId())
-                .orElseGet(() -> conversationRepository.save(
-                        Conversation.builder()
-                                .clientId(clientId)
-                                .freelancerId(freelancerId)
-                                .jobId(request.getJobId())
-                                .build()
-                ));
+                    return conversationRepository.save(
+                            Conversation.builder()
+                                    .clientId(clientId)
+                                    .freelancerId(freelancerId)
+                                    .jobId(request.getJobId())
+                                    .build()
+                    );
+                });
 
         Instant now = Instant.now();
         conversation.setLastMessage(request.getContent());
@@ -148,11 +161,26 @@ public class ChatServiceImpl implements ChatService {
         }
     }
 
+    /**
+     * Hàm tìm kiếm cuộc trò chuyện 2 chiều song phương (A-B hoặc B-A)
+     */
     private Optional<Conversation> findExistingConversation(String user1, String user2, String jobId) {
         if (jobId != null && !jobId.isBlank()) {
-            return conversationRepository.findByTwoUsersAndJobId(user1, user2, jobId);
+            // Thử tìm chiều thứ nhất (user1, user2)
+            Optional<Conversation> conv = conversationRepository.findByTwoUsersAndJobId(user1, user2, jobId);
+            if (conv.isPresent()) {
+                return conv;
+            }
+            // Nếu không có, thử tìm chiều ngược lại (user2, user1)
+            return conversationRepository.findByTwoUsersAndJobId(user2, user1, jobId);
         }
-        return conversationRepository.findByTwoUsers(user1, user2);
+
+        // Trường hợp không có jobId
+        Optional<Conversation> conv = conversationRepository.findByTwoUsers(user1, user2);
+        if (conv.isPresent()) {
+            return conv;
+        }
+        return conversationRepository.findByTwoUsers(user2, user1);
     }
 
     private ConversationResponse mapToConversationResponse(Conversation conv, String currentUserId) {
