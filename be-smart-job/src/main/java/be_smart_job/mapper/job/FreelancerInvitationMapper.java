@@ -14,11 +14,11 @@ public interface FreelancerInvitationMapper {
     @Mapping(target = "status", source = "invitation.status")
     @Mapping(target = "createdAt", source = "invitation.createdAt")
     @Mapping(target = "updatedAt", source = "invitation.updatedAt")
-    @Mapping(target = "client", source = "client")
-    @Mapping(target = "freelancerProfile", source = "profile")
+    @Mapping(target = "client", source = "clientResponse") // Ánh ánh chính xác clientResponse vào field client
+    @Mapping(target = "freelancerProfile", source = "profileResponse")
     FreelancerInvitationResponse toResponse(
             FreelancerInvitation invitation,
-            UserResponse client,
-            FreelancerProfileResponse profile
+            UserResponse clientResponse,
+            FreelancerProfileResponse profileResponse
     );
 }
