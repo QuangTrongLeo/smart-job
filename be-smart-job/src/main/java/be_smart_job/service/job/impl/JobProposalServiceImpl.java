@@ -20,11 +20,13 @@ import be_smart_job.service.job.interfaces.FreelancerProfileService;
 import be_smart_job.service.job.interfaces.JobProposalService;
 import be_smart_job.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class JobProposalServiceImpl implements JobProposalService {
@@ -41,7 +43,8 @@ public class JobProposalServiceImpl implements JobProposalService {
     public JobProposalResponse createProposal(JobProposalRequest request) {
         validateRole("FREELANCER", "Chỉ Freelancer mới có thể gửi yêu cầu ứng tuyển!");
 
-        String currentUserId = SecurityUtils.getCurrentUserId();
+        // 1. Chuẩn hóa ID của Freelancer đang đăng nhập
+        String currentUserId = resolveUserId(SecurityUtils.getCurrentUserId());
 
         Job job = jobRepository.findById(request.getJobId())
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy thông tin công việc!"));
@@ -50,8 +53,12 @@ public class JobProposalServiceImpl implements JobProposalService {
             throw new IllegalArgumentException("Công việc này hiện không còn tiếp nhận thêm ứng tuyển!");
         }
 
+        // 2. Chuẩn hóa ID khi tìm Freelancer Profile
         FreelancerProfile profile = profileRepository.findByUserId(currentUserId)
-                .orElseThrow(() -> new IllegalArgumentException("Bạn chưa tạo hồ sơ Freelancer, vui lòng tạo hồ sơ trước!"));
+                .orElseGet(() -> profileRepository.findAll().stream()
+                        .filter(p -> resolveUserId(p.getUserId()).equals(currentUserId))
+                        .findFirst()
+                        .orElseThrow(() -> new IllegalArgumentException("Bạn chưa tạo hồ sơ Freelancer, vui lòng tạo hồ sơ trước!")));
 
         boolean existsPending = proposalRepository.existsByFreelancerUserIdAndJobIdAndStatus(
                 currentUserId, request.getJobId(), ProposalStatus.PENDING
@@ -61,11 +68,14 @@ public class JobProposalServiceImpl implements JobProposalService {
             throw new IllegalArgumentException("Bạn đã gửi yêu cầu ứng tuyển cho công việc này rồi!");
         }
 
+        // 3. Chuẩn hóa ID của Client sở hữu Bài đăng
+        String jobClientId = resolveUserId(job.getClientId());
+
         JobProposal proposal = JobProposal.builder()
                 .jobId(job.getId())
-                .clientId(job.getClientId())
-                .freelancerUserId(currentUserId)
-                .freelancerProfileId(profile.getId())
+                .clientId(jobClientId)              // Luôn lưu ObjectId của Client
+                .freelancerUserId(currentUserId)    // Luôn lưu ObjectId của Freelancer User
+                .freelancerProfileId(profile.getId())// Lưu ID Profile
                 .status(ProposalStatus.PENDING)
                 .build();
 
@@ -76,7 +86,7 @@ public class JobProposalServiceImpl implements JobProposalService {
     @Override
     public List<JobProposalResponse> getMySentProposals() {
         validateRole("FREELANCER", "Chỉ Freelancer mới có quyền truy cập danh sách đã ứng tuyển!");
-        String currentUserId = SecurityUtils.getCurrentUserId();
+        String currentUserId = resolveUserId(SecurityUtils.getCurrentUserId());
 
         return proposalRepository.findByFreelancerUserIdOrderByCreatedAtDesc(currentUserId)
                 .stream()
@@ -87,12 +97,13 @@ public class JobProposalServiceImpl implements JobProposalService {
     @Override
     public void cancelProposal(String proposalId) {
         validateRole("FREELANCER", "Chỉ Freelancer mới có quyền hủy ứng tuyển!");
-        String currentUserId = SecurityUtils.getCurrentUserId();
+        String currentUserId = resolveUserId(SecurityUtils.getCurrentUserId());
 
         JobProposal proposal = proposalRepository.findById(proposalId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy thông tin ứng tuyển!"));
 
-        if (!proposal.getFreelancerUserId().equals(currentUserId)) {
+        // So sánh bằng ObjectId đã chuẩn hóa
+        if (!resolveUserId(proposal.getFreelancerUserId()).equals(currentUserId)) {
             throw new AccessDeniedException("Bạn không có quyền hủy ứng tuyển này!");
         }
 
@@ -103,12 +114,13 @@ public class JobProposalServiceImpl implements JobProposalService {
     @Override
     public List<JobProposalResponse> getProposalsByJob(String jobId, ProposalStatus status) {
         validateRole("CLIENT", "Chỉ Client sở hữu công việc mới có thể xem danh sách ứng tuyển!");
-        String currentClientId = SecurityUtils.getCurrentUserId();
+        String currentClientId = resolveUserId(SecurityUtils.getCurrentUserId());
 
         Job job = jobRepository.findById(jobId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy công việc!"));
 
-        if (!job.getClientId().equals(currentClientId)) {
+        // So sánh bằng ObjectId đã chuẩn hóa
+        if (!resolveUserId(job.getClientId()).equals(currentClientId)) {
             throw new AccessDeniedException("Bạn không phải chủ sở hữu công việc này!");
         }
 
@@ -122,12 +134,13 @@ public class JobProposalServiceImpl implements JobProposalService {
     @Override
     public JobProposalResponse respondToProposal(String proposalId, ProposalStatus status) {
         validateRole("CLIENT", "Chỉ Client mới có quyền phản hồi ứng tuyển!");
-        String currentClientId = SecurityUtils.getCurrentUserId();
+        String currentClientId = resolveUserId(SecurityUtils.getCurrentUserId());
 
         JobProposal proposal = proposalRepository.findById(proposalId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy thông tin ứng tuyển!"));
 
-        if (!proposal.getClientId().equals(currentClientId)) {
+        // So sánh bằng ObjectId đã chuẩn hóa
+        if (!resolveUserId(proposal.getClientId()).equals(currentClientId)) {
             throw new AccessDeniedException("Bạn không có quyền xử lý lượt ứng tuyển này!");
         }
 
@@ -152,10 +165,39 @@ public class JobProposalServiceImpl implements JobProposalService {
     }
 
     private JobProposalResponse mapToResponse(JobProposal proposal) {
-        User clientUser = userRepository.findById(proposal.getClientId()).orElse(null);
+        User clientUser = null;
+
+        if (proposal.getClientId() != null) {
+            // Lấy User từ clientId, hỗ trợ cả trường hợp record cũ lỡ lưu Email/Username
+            try {
+                String clientUserId = resolveUserId(proposal.getClientId());
+                clientUser = userRepository.findById(clientUserId).orElse(null);
+            } catch (Exception e) {
+                log.warn("[PROPOSAL] Không tìm thấy Client User cho Proposal ID: {}, Raw ClientId: {}",
+                        proposal.getId(), proposal.getClientId());
+            }
+        }
+
         UserResponse clientResponse = clientUser != null ? userMapper.toResponse(clientUser) : null;
         FreelancerProfileResponse profileResponse = profileService.getProfileById(proposal.getFreelancerProfileId());
 
         return proposalMapper.toResponse(proposal, clientResponse, profileResponse);
+    }
+
+    /**
+     * Hàm helper chuyển đổi Identifier (Email/Username/ObjectId) về đúng ObjectId của User.id
+     */
+    private String resolveUserId(String identifier) {
+        if (identifier == null || identifier.isBlank()) {
+            throw new IllegalArgumentException("Identifier người dùng không được để trống");
+        }
+
+        return userRepository.findById(identifier)
+                .map(User::getId)
+                .orElseGet(() -> userRepository.findByEmail(identifier)
+                        .map(User::getId)
+                        .orElseGet(() -> userRepository.findByUsername(identifier)
+                                .map(User::getId)
+                                .orElse(identifier))); // Nếu không tìm thấy trong UserDB thì giữ nguyên
     }
 }

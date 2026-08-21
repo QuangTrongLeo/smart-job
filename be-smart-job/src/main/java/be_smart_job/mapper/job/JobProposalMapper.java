@@ -11,14 +11,15 @@ import org.mapstruct.Mapping;
 public interface JobProposalMapper {
 
     @Mapping(target = "id", source = "proposal.id")
+    @Mapping(target = "jobId", source = "proposal.jobId") // Đã thêm ánh xạ jobId
     @Mapping(target = "status", source = "proposal.status")
     @Mapping(target = "createdAt", source = "proposal.createdAt")
     @Mapping(target = "updatedAt", source = "proposal.updatedAt")
-    @Mapping(target = "client", source = "client")
-    @Mapping(target = "freelancerProfile", source = "profile")
+    @Mapping(target = "client", source = "clientResponse")
+    @Mapping(target = "freelancerProfile", source = "profileResponse")
     JobProposalResponse toResponse(
             JobProposal proposal,
-            UserResponse client,
-            FreelancerProfileResponse profile
+            UserResponse clientResponse,
+            FreelancerProfileResponse profileResponse
     );
 }
