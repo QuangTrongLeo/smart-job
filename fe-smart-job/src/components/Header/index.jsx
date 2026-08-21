@@ -154,14 +154,24 @@ function Header() {
 
                   {/* Hiển thị link yêu thích tương ứng với Role */}
                   {userRole === 'FREELANCER' && (
-                    <Link 
-                      to={config.routes.favorite_jobs} 
-                      className={styles.dropdownItem}
-                      onClick={() => setShowDropdown(false)}
-                    >
-                      <i className="bi bi-heart me-2 text-danger"></i>
-                      Công việc đã lưu
-                    </Link>
+                    <>
+                      <Link
+                        to={config.routes.favorite_jobs}
+                        className={styles.dropdownItem}
+                        onClick={() => setShowDropdown(false)}
+                      >
+                        <i className="bi bi-heart me-2 text-danger"></i>
+                        Công việc đã lưu
+                      </Link>
+                      <Link
+                        to={config.routes.freelancer_roadmaps}
+                        className={styles.dropdownItem}
+                        onClick={() => setShowDropdown(false)}
+                      >
+                        <i className="bi bi-map me-2 text-primary"></i>
+                        Lộ trình học tập
+                      </Link>
+                    </>
                   )}
 
                   {userRole === 'CLIENT' && (

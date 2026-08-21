@@ -1,6 +1,5 @@
 
 import config from '../config';
-import { SidebarLayout } from '~/layouts';
 
 // Import tất cả các Pages từ src/pages/index.js
 import { 
@@ -18,7 +17,8 @@ import {
     FavoriteJobs,
     FavoriteFreelancers,
     ClientJobManagement,
-    FreelancerProfileManager
+    FreelancerProfileManager,
+    FreelancerRoadmaps
 } from '~/pages';
 
 const publishRoutes = [
@@ -39,6 +39,7 @@ const freelancerRoutes = [
 //   { path: '/freelancer/my-jobs', component: MyJobs },
   { path: config.routes.favorite_jobs, component: FavoriteJobs },
   { path: config.routes.manage_freelancer, component: FreelancerProfileManager },
+  { path: config.routes.freelancer_roadmaps, component: FreelancerRoadmaps },
 ];
 
 const clientRoutes = [

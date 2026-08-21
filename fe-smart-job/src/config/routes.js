@@ -18,6 +18,7 @@ const routes = {
   favorite_freelancers: '/favorite-freelancers',
   manage_jobs: '/manage-jobs',
   manage_freelancer: '/manage-freelancer',
+  freelancer_roadmaps: '/freelancer/roadmaps',
 };
 
 export default routes;
