@@ -1,13 +1,16 @@
 package be_smart_job.controller.ai;
 
 import be_smart_job.dto.req.ai.ChatbotReq;
+import be_smart_job.dto.req.ai.JobMatchReq;
 import be_smart_job.dto.req.ai.JobParseReq;
 import be_smart_job.dto.res.ApiResponse;
 import be_smart_job.dto.res.ai.ChatbotResponse;
 import be_smart_job.dto.res.ai.CvParseResponse;
+import be_smart_job.dto.res.ai.JobMatchResponse;
 import be_smart_job.dto.res.ai.JobParseResponse;
 import be_smart_job.service.ai.interfaces.ChatBotService;
 import be_smart_job.service.ai.interfaces.CvParsingService;
+import be_smart_job.service.ai.interfaces.JobMatchService;
 import be_smart_job.service.ai.interfaces.JobParsingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +28,7 @@ public class AiController {
     private final ChatBotService chatBotService;
     private final JobParsingService jobParsingService;
     private final CvParsingService cvParsingService;
+    private final JobMatchService jobMatchService;
 
     @PostMapping(value = "/chatbot", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<ChatbotResponse> chat(
@@ -51,5 +55,15 @@ public class AiController {
     ) {
         CvParseResponse response = cvParsingService.parseCvFile(file);
         return ApiResponse.of(HttpStatus.OK.value(), "Bóc tách hồ sơ CV bằng AI thành công", response);
+    }
+
+    // Ghép nối thông minh & giải thích lý do ghép nối
+    @PostMapping("/match")
+    @PreAuthorize("hasAnyRole('CLIENT', 'FREELANCER') or hasAnyAuthority('CLIENT', 'FREELANCER')")
+    public ApiResponse<JobMatchResponse> matchFreelancerToJob(
+            @Valid @RequestBody JobMatchReq request
+    ) {
+        JobMatchResponse response = jobMatchService.matchFreelancerToJob(request);
+        return ApiResponse.of(HttpStatus.OK.value(), "Tính toán ghép nối AI thành công", response);
     }
 }
