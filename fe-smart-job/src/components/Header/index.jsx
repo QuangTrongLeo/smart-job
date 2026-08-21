@@ -171,18 +171,36 @@ function Header() {
                         <i className="bi bi-map me-2 text-primary"></i>
                         Lộ trình học tập
                       </Link>
+                      <Link
+                        to={config.routes.freelancer_invitations}
+                        className={styles.dropdownItem}
+                        onClick={() => setShowDropdown(false)}
+                      >
+                        <i className="bi bi-envelope-paper me-2 text-success"></i>
+                        Lời mời hợp tác
+                      </Link>
                     </>
                   )}
 
                   {userRole === 'CLIENT' && (
-                    <Link 
-                      to={config.routes.favorite_freelancers} 
-                      className={styles.dropdownItem}
-                      onClick={() => setShowDropdown(false)}
-                    >
-                      <i className="bi bi-bookmark-star me-2 text-warning"></i>
-                      Freelancer đã lưu
-                    </Link>
+                    <>
+                      <Link
+                        to={config.routes.favorite_freelancers}
+                        className={styles.dropdownItem}
+                        onClick={() => setShowDropdown(false)}
+                      >
+                        <i className="bi bi-bookmark-star me-2 text-warning"></i>
+                        Freelancer đã lưu
+                      </Link>
+                      <Link
+                        to={config.routes.client_invitations}
+                        className={styles.dropdownItem}
+                        onClick={() => setShowDropdown(false)}
+                      >
+                        <i className="bi bi-send-check me-2 text-success"></i>
+                        Lời mời đã gửi
+                      </Link>
+                    </>
                   )}
 
                   <div className={styles.divider} />

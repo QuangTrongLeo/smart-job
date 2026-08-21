@@ -17,8 +17,10 @@ const routes = {
   favorite_jobs: '/favorite-jobs',
   favorite_freelancers: '/favorite-freelancers',
   manage_jobs: '/manage-jobs',
+  client_invitations: '/client/invitations',
   manage_freelancer: '/manage-freelancer',
   freelancer_roadmaps: '/freelancer/roadmaps',
+  freelancer_invitations: '/freelancer/invitations',
 };
 
 export default routes;

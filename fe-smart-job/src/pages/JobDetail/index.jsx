@@ -8,6 +8,26 @@ import styles from './JobDetail.module.scss';
 const DEFAULT_AVATAR =
   'https://ui-avatars.com/api/?background=2563eb&color=fff&name=User';
 
+const getClientUserId = (job, currentUserId) => {
+  if (!job) return null;
+
+  // Gom tất cả các ứng viên ID có trong đối tượng job
+  const possibleIds = [
+    job?.client?.id,
+    job?.client?._id,
+    job?.client?.user?.id,
+    job?.client?.userId,
+    job?.clientId
+  ];
+
+  // Tìm ID đầu tiên tồn tại VÀ KHÔNG TRÙNG với ID người đang đăng nhập
+  const validPartnerId = possibleIds.find(
+    (id) => id && String(id).trim() !== String(currentUserId).trim()
+  );
+
+  return validPartnerId ? String(validPartnerId).trim() : null;
+};
+
 function JobDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -26,8 +46,20 @@ function JobDetail() {
       try {
         // 1. Lấy thông tin chi tiết công việc
         const jobResponse = await jobService.getJobById(id);
-        if (jobResponse && jobResponse.data) {
-          setJob(jobResponse.data);
+        const jobData = jobResponse?.data?.data || jobResponse?.data || jobResponse;
+        console.groupCollapsed('[JobDetail] Job detail response');
+        console.log('Raw response:', jobResponse);
+        console.log('Resolved job data:', jobData);
+        console.log('Client data:', jobData?.client);
+        console.log('Possible employer IDs:', {
+          nestedUserId: jobData?.client?.user?.id,
+          clientUserId: jobData?.client?.userId,
+          rootClientId: jobData?.clientId,
+          clientId: jobData?.client?.id,
+        });
+        console.groupEnd();
+        if (jobData) {
+          setJob(jobData);
         }
 
         // 2. Kiểm tra xem công việc này đã được yêu thích trước đó chưa
@@ -80,9 +112,26 @@ function JobDetail() {
   };
 
   const handleMessage = async () => {
-    const partnerId = job?.client?.id;
+    // Lấy ID chuẩn của User đang đăng nhập
+    const currentUserId = user?.id || user?._id || user?.userId;
+
+    // Lấy PartnerId đã qua bộ lọc loại trừ chính mình
+    const partnerId = getClientUserId(job, currentUserId);
+
+    console.groupCollapsed('[JobDetail] Initiate employer conversation');
+    console.log('Current logged in user ID:', currentUserId);
+    console.log('Resolved partnerId (Employer):', partnerId);
+    console.groupEnd();
+
+    // 1. Kiểm tra nếu không tìm thấy Partner ID hợp lệ
     if (!partnerId || messaging) {
-      setMessageError('Không tìm thấy thông tin người tuyển dụng.');
+      setMessageError('Không tìm thấy tài khoản người tuyển dụng để mở cuộc trò chuyện.');
+      return;
+    }
+
+    // 2. Bảo vệ bổ sung: Nếu bài đăng này do chính User hiện tại đăng (Chủ Job xem bài của chính mình)
+    if (currentUserId && String(currentUserId) === String(partnerId)) {
+      setMessageError('Bạn không thể mở cuộc trò chuyện với chính bài đăng của mình.');
       return;
     }
 
@@ -90,14 +139,16 @@ function JobDetail() {
     setMessageError('');
     try {
       const response = await chatService.getOrCreateConversation({
-        partnerId,
+        partnerId: partnerId,
         jobId: job.id,
       });
+      
       const conversation = response?.data?.data || response?.data;
       if (!conversation?.id) throw new Error('Missing conversation id');
+      
       navigate(`/messages?conversationId=${conversation.id}`, { state: { conversation } });
     } catch (error) {
-      console.error('Lỗi khi khởi tạo cuộc trò chuyện:', error);
+      console.error('[JobDetail] Conversation error:', error);
       setMessageError(error.response?.data?.message || 'Không thể mở cuộc trò chuyện. Vui lòng thử lại.');
     } finally {
       setMessaging(false);

@@ -12,4 +12,22 @@ export const jobService = {
   updateJob: (id, data) => axiosClient.put(`/jobs/${id}`, data),
   
   deleteJob: (id) => axiosClient.delete(`/jobs/${id}`),
+
+  // Freelancer proposals
+  createProposal: (data) => axiosClient.post('/jobs/proposals', data),
+
+  getMySentProposals: () => axiosClient.get('/jobs/proposals/me'),
+
+  cancelProposal: (id) => axiosClient.delete(`/jobs/proposals/${id}/cancel`),
+
+  // Client proposal management
+  getProposalsByJob: (jobId, status) =>
+    axiosClient.get(`/jobs/proposals/job/${jobId}`, {
+      params: status ? { status } : undefined,
+    }),
+
+  respondToProposal: (id, status) =>
+    axiosClient.patch(`/jobs/proposals/${id}/respond`, null, {
+      params: { status },
+    }),
 };

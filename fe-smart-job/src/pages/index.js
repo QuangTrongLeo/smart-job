@@ -14,3 +14,5 @@ export { default as FavoriteFreelancers } from './FavoriteFreelancers';
 export { default as ClientJobManagement } from './ClientJobManagement';
 export { default as FreelancerProfileManager } from './FreelancerProfileManager';
 export { default as FreelancerRoadmaps } from './FreelancerRoadmaps';
+export { default as FreelancerInvitations } from './FreelancerInvitations';
+export { default as ClientInvitations } from './ClientInvitations';

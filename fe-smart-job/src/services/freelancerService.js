@@ -12,4 +12,23 @@ export const freelancerService = {
   updateMyProfile: (data) => axiosClient.put('/freelancers/me', data),
   
   deleteMyProfile: () => axiosClient.delete('/freelancers/me'),
+
+  // Client invitations
+  sendInvitation: (data) => axiosClient.post('/freelancers/invitations', data),
+
+  getSentInvitations: () => axiosClient.get('/freelancers/invitations/sent'),
+
+  cancelInvitation: (id) =>
+    axiosClient.delete(`/freelancers/invitations/${id}/cancel`),
+
+  // Freelancer invitation management
+  getReceivedInvitations: (status) =>
+    axiosClient.get('/freelancers/invitations/received', {
+      params: status ? { status } : undefined,
+    }),
+
+  respondToInvitation: (id, status) =>
+    axiosClient.patch(`/freelancers/invitations/${id}/respond`, null, {
+      params: { status },
+    }),
 };

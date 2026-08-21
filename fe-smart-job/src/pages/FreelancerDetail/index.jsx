@@ -25,6 +25,9 @@ const formatDate = (dateStr) => {
     : parsed.toLocaleDateString('vi-VN', { month: '2-digit', year: 'numeric' });
 };
 
+const getInvitationData = (response) =>
+  response?.data?.data || response?.data || response || {};
+
 export function FreelancerDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -34,6 +37,10 @@ export function FreelancerDetail() {
   const [error, setError] = useState('');
   const [messaging, setMessaging] = useState(false);
   const [messageError, setMessageError] = useState('');
+  const [invitationSending, setInvitationSending] = useState(false);
+  const [invitationId, setInvitationId] = useState(null);
+  const [invitationMessage, setInvitationMessage] = useState('');
+  const [invitationError, setInvitationError] = useState('');
 
   useEffect(() => {
     if (!id) {
@@ -133,6 +140,52 @@ export function FreelancerDetail() {
       console.error('Lỗi khi khởi tạo cuộc trò chuyện:', requestError);
       setMessageError(requestError.response?.data?.message || 'Không thể mở cuộc trò chuyện. Vui lòng thử lại.');
       setMessaging(false);
+    }
+  };
+
+  const handleSendInvitation = async () => {
+    const freelancerProfileId = profile?.id;
+    if (!freelancerProfileId || invitationSending) return;
+
+    setInvitationSending(true);
+    setInvitationMessage('');
+    setInvitationError('');
+
+    try {
+      const response = await freelancerService.sendInvitation({ freelancerProfileId });
+      const invitation = getInvitationData(response);
+      setInvitationId(invitation?.id || null);
+      setInvitationMessage('Đã gửi lời mời hợp tác thành công.');
+    } catch (requestError) {
+      console.error('Lỗi khi gửi lời mời hợp tác:', requestError);
+      setInvitationError(
+        requestError.response?.data?.message ||
+          'Không thể gửi lời mời hợp tác. Vui lòng thử lại.',
+      );
+    } finally {
+      setInvitationSending(false);
+    }
+  };
+
+  const handleCancelInvitation = async () => {
+    if (!invitationId || invitationSending) return;
+
+    setInvitationSending(true);
+    setInvitationMessage('');
+    setInvitationError('');
+
+    try {
+      await freelancerService.cancelInvitation(invitationId);
+      setInvitationId(null);
+      setInvitationMessage('Đã hủy lời mời hợp tác.');
+    } catch (requestError) {
+      console.error('Lỗi khi hủy lời mời hợp tác:', requestError);
+      setInvitationError(
+        requestError.response?.data?.message ||
+          'Không thể hủy lời mời hợp tác. Vui lòng thử lại.',
+      );
+    } finally {
+      setInvitationSending(false);
     }
   };
 
@@ -382,12 +435,22 @@ export function FreelancerDetail() {
             <i className={`bi bi-briefcase-fill ${styles.hireIcon}`}></i>
             <h3>Cần tìm Freelancer dự án?</h3>
             <p>Liên hệ và trao đổi trực tiếp với {fullName} để bắt đầu công việc ngay hôm nay.</p>
-            <button 
-              onClick={() => alert(`Đã gửi lời mời hợp tác tới ${fullName}`)}
+            <button
+              onClick={invitationId ? handleCancelInvitation : handleSendInvitation}
               className={styles.btnHire}
+              disabled={invitationSending}
             >
-              Gửi lời mời hợp tác
+              <i
+                className={invitationSending
+                  ? 'bi bi-hourglass-split'
+                  : invitationId ? 'bi bi-x-circle' : 'bi bi-send-fill'}
+              ></i>
+              {invitationSending
+                ? invitationId ? 'Đang hủy lời mời...' : 'Đang gửi lời mời...'
+                : invitationId ? 'Hủy lời mời hợp tác' : 'Gửi lời mời hợp tác'}
             </button>
+            {invitationMessage && <p role="status">{invitationMessage}</p>}
+            {invitationError && <p role="alert">{invitationError}</p>}
           </div>
         </aside>
       </div>
