@@ -16,3 +16,5 @@ export { default as FreelancerProfileManager } from './FreelancerProfileManager'
 export { default as FreelancerRoadmaps } from './FreelancerRoadmaps';
 export { default as FreelancerInvitations } from './FreelancerInvitations';
 export { default as ClientInvitations } from './ClientInvitations';
+export { default as ClientProposals } from './ClientProposals';
+export { default as FreelancerProposals } from './FreelancerProposals';

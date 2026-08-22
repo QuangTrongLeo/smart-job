@@ -7,3 +7,4 @@ export * from './jobService';
 export * from './chatService';
 export * from './favoriteService';
 export * from './aiService';
+export * from './jobMatchService';

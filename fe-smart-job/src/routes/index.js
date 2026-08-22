@@ -18,9 +18,11 @@ import {
     FavoriteFreelancers,
     ClientJobManagement,
     ClientInvitations,
+    ClientProposals,
     FreelancerProfileManager,
     FreelancerRoadmaps,
-    FreelancerInvitations
+    FreelancerInvitations,
+    FreelancerProposals
 } from '~/pages';
 
 const publishRoutes = [
@@ -43,12 +45,14 @@ const freelancerRoutes = [
   { path: config.routes.manage_freelancer, component: FreelancerProfileManager },
   { path: config.routes.freelancer_roadmaps, component: FreelancerRoadmaps },
   { path: config.routes.freelancer_invitations, component: FreelancerInvitations },
+  { path: config.routes.freelancer_proposals, component: FreelancerProposals },
 ];
 
 const clientRoutes = [
   { path: config.routes.manage_jobs, component: ClientJobManagement },
   { path: config.routes.favorite_freelancers, component: FavoriteFreelancers },
   { path: config.routes.client_invitations, component: ClientInvitations },
+  { path: config.routes.client_proposals, component: ClientProposals },
 ];
 
 const messageRoutes = [

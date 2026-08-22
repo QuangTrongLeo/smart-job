@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { freelancerService, favoriteService, chatService } from '~/services';
+import config from '~/config';
 import styles from './FreelancerDetail.module.scss';
 
 const DEFAULT_AVATAR = 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
@@ -156,6 +157,7 @@ export function FreelancerDetail() {
       const invitation = getInvitationData(response);
       setInvitationId(invitation?.id || null);
       setInvitationMessage('Đã gửi lời mời hợp tác thành công.');
+      navigate(config.routes.client_invitations);
     } catch (requestError) {
       console.error('Lỗi khi gửi lời mời hợp tác:', requestError);
       setInvitationError(

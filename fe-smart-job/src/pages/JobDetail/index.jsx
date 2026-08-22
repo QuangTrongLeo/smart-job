@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { jobService, favoriteService, chatService } from '../../services';
 import { useAuth } from '../../context/AuthContext';
+import config from '../../config';
 import AiMatchWidget from '../../components/AiMatchWidget/AiMatchWidget';
 import styles from './JobDetail.module.scss';
 
@@ -28,6 +29,9 @@ const getClientUserId = (job, currentUserId) => {
   return validPartnerId ? String(validPartnerId).trim() : null;
 };
 
+const getProposalData = (response) =>
+  response?.data?.data || response?.data || response || {};
+
 function JobDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -36,7 +40,10 @@ function JobDetail() {
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isSaved, setIsSaved] = useState(false);
-  const [hasApplied, setHasApplied] = useState(false);
+  const [proposalId, setProposalId] = useState(null);
+  const [proposalStatus, setProposalStatus] = useState(null);
+  const [proposalLoading, setProposalLoading] = useState(false);
+  const [proposalError, setProposalError] = useState('');
   const [messaging, setMessaging] = useState(false);
   const [messageError, setMessageError] = useState('');
 
@@ -60,6 +67,26 @@ function JobDetail() {
         console.groupEnd();
         if (jobData) {
           setJob(jobData);
+
+          // Đồng bộ proposal hiện có để nút ứng tuyển giữ đúng trạng thái khi quay lại trang.
+          try {
+            const proposalResponse = await jobService.getMySentProposals();
+            const proposals = proposalResponse?.data?.data || proposalResponse?.data || proposalResponse || [];
+            const currentProposal = Array.isArray(proposals)
+              ? proposals.find((proposal) => (
+                String(proposal?.job?.id || proposal?.jobId) === String(jobData.id) &&
+                proposal?.status !== 'CANCELLED'
+              ))
+              : null;
+
+            if (currentProposal) {
+              setProposalId(currentProposal.id);
+              setProposalStatus(currentProposal.status || 'PENDING');
+            }
+          } catch (proposalError) {
+            // Người dùng không phải Freelancer có thể không được phép gọi endpoint này.
+            console.warn('Không thể kiểm tra trạng thái ứng tuyển:', proposalError);
+          }
         }
 
         // 2. Kiểm tra xem công việc này đã được yêu thích trước đó chưa
@@ -106,9 +133,52 @@ function JobDetail() {
     });
   };
 
-  const handleApply = () => {
-    setHasApplied(true);
-    alert('Ứng tuyển thành công!');
+  const handleApply = async () => {
+    if (!job?.id || proposalLoading) return;
+
+    setProposalLoading(true);
+    setProposalError('');
+    try {
+      const response = await jobService.createProposal({ jobId: job.id });
+      const proposal = getProposalData(response);
+
+      if (!proposal?.id) {
+        throw new Error('Missing proposal id');
+      }
+
+      setProposalId(proposal.id);
+      setProposalStatus(proposal.status || 'PENDING');
+      navigate(config.routes.freelancer_proposals);
+    } catch (requestError) {
+      console.error('Lỗi khi gửi đề xuất ứng tuyển:', requestError);
+      setProposalError(
+        requestError.response?.data?.message ||
+          'Không thể gửi đề xuất ứng tuyển. Vui lòng thử lại.',
+      );
+    } finally {
+      setProposalLoading(false);
+    }
+  };
+
+  const handleCancelProposal = async () => {
+    if (!proposalId || proposalLoading) return;
+
+    setProposalLoading(true);
+    setProposalError('');
+    try {
+      await jobService.cancelProposal(proposalId);
+      setProposalId(null);
+      setProposalStatus(null);
+      setProposalError('Đã hủy ứng tuyển. Bạn có thể ứng tuyển lại công việc này.');
+    } catch (requestError) {
+      console.error('Lỗi khi hủy đề xuất ứng tuyển:', requestError);
+      setProposalError(
+        requestError.response?.data?.message ||
+          'Không thể hủy đề xuất ứng tuyển. Vui lòng thử lại.',
+      );
+    } finally {
+      setProposalLoading(false);
+    }
   };
 
   const handleMessage = async () => {
@@ -307,13 +377,16 @@ function JobDetail() {
 
             <div className={styles.buttonGroup}>
               <button
-                onClick={handleApply}
-                disabled={hasApplied}
+                onClick={proposalId && proposalStatus === 'PENDING' ? handleCancelProposal : handleApply}
+                disabled={proposalLoading || Boolean(proposalId && proposalStatus !== 'PENDING')}
                 className={styles.btnPrimary}
               >
-                <i className="bi bi-send-fill"></i>
-                {hasApplied ? 'Đã ứng tuyển' : 'Ứng tuyển ngay'}
+                <i className={proposalLoading ? 'bi bi-hourglass-split' : proposalId ? 'bi bi-x-circle' : 'bi bi-send-fill'}></i>
+                {proposalLoading
+                  ? proposalId ? 'Đang hủy ứng tuyển...' : 'Đang gửi đề xuất...'
+                  : proposalId && proposalStatus === 'PENDING' ? 'Hủy ứng tuyển' : proposalId ? 'Đã ứng tuyển' : 'Ứng tuyển ngay'}
               </button>
+              {proposalError && <p role="alert">{proposalError}</p>}
 
               <button onClick={handleMessage} className={styles.btnMessage} disabled={messaging}>
                 <i className={messaging ? 'bi bi-hourglass-split' : 'bi bi-chat-dots-fill'}></i>

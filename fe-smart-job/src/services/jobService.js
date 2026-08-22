@@ -21,10 +21,7 @@ export const jobService = {
   cancelProposal: (id) => axiosClient.delete(`/jobs/proposals/${id}/cancel`),
 
   // Client proposal management
-  getProposalsByJob: (jobId, status) =>
-    axiosClient.get(`/jobs/proposals/job/${jobId}`, {
-      params: status ? { status } : undefined,
-    }),
+  getProposalsForClient: () => axiosClient.get('/jobs/proposals/client'),
 
   respondToProposal: (id, status) =>
     axiosClient.patch(`/jobs/proposals/${id}/respond`, null, {

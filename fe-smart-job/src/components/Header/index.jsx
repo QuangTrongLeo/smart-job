@@ -179,6 +179,14 @@ function Header() {
                         <i className="bi bi-envelope-paper me-2 text-success"></i>
                         Lời mời hợp tác
                       </Link>
+                      <Link
+                        to={config.routes.freelancer_proposals}
+                        className={styles.dropdownItem}
+                        onClick={() => setShowDropdown(false)}
+                      >
+                        <i className="bi bi-file-earmark-text me-2 text-info"></i>
+                        Đề xuất đã gửi
+                      </Link>
                     </>
                   )}
 
@@ -199,6 +207,14 @@ function Header() {
                       >
                         <i className="bi bi-send-check me-2 text-success"></i>
                         Lời mời đã gửi
+                      </Link>
+                      <Link
+                        to={config.routes.client_proposals}
+                        className={styles.dropdownItem}
+                        onClick={() => setShowDropdown(false)}
+                      >
+                        <i className="bi bi-people me-2 text-info"></i>
+                        Đề xuất nhận được
                       </Link>
                     </>
                   )}

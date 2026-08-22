@@ -12,7 +12,4 @@ import java.util.Optional;
 @Repository
 public interface JobMatchRepository extends MongoRepository<JobMatch, String> {
     Optional<JobMatch> findByJobIdAndFreelancerId(String jobId, String freelancerId);
-    Page<JobMatch> findByFreelancerIdAndStatus(String freelancerId, MatchStatus status, Pageable pageable);
-    Page<JobMatch> findByJobId(String jobId, Pageable pageable);
-    boolean existsByJobIdAndFreelancerId(String jobId, String freelancerId);
 }
