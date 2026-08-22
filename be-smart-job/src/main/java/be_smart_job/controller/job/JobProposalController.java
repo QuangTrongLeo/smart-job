@@ -38,13 +38,13 @@ public class JobProposalController {
         List<JobProposalResponse> list = proposalService.getMySentProposals();
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK.value(), "Lấy danh sách đề xuất thành công", list));
     }
-
-    // Freelancer hủy đề xuất
+    
+    // Freelancer hủy/xóa đơn ứng tuyển
     @DeleteMapping("/{id}/cancel")
     @PreAuthorize("hasRole('FREELANCER') or hasAuthority('FREELANCER')")
     public ResponseEntity<ApiResponse<Void>> cancelProposal(@PathVariable String id) {
         proposalService.cancelProposal(id);
-        return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK.value(), "Hủy đề xuất thành công", null));
+        return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK.value(), "Xóa đơn ứng tuyển thành công", null));
     }
 
     // Client xem danh sách các đề xuất được gửi đến cho 1 Job cụ thể
