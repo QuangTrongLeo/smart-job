@@ -1,9 +1,6 @@
-package be_smart_job.repository.ai;
+package be_smart_job.repository.job;
 
 import be_smart_job.entity.JobMatch;
-import be_smart_job.enums.MatchStatus;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 

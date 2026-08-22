@@ -40,6 +40,8 @@ public class SecurityConfig {
                         .requestMatchers("/auth/**").permitAll()
                         // Cho phép truy cập công khai Chatbot (nếu muốn), loại trừ /ai/parse-job
                         .requestMatchers(HttpMethod.POST, "/ai/chatbot").permitAll()
+
+                        // Yêu cầu xác thực với các thông tin cá nhân/yêu cầu đăng nhập
                         .requestMatchers(
                                 "/users/my-profile",
                                 "/jobs/my-jobs",
@@ -47,13 +49,17 @@ public class SecurityConfig {
                                 "/favorites/**",
                                 "/chat/**"
                         ).authenticated()
+
+                        // Cho phép truy cập công khai các API đọc dữ liệu (Thêm /job-matches/** vào đây)
                         .requestMatchers(HttpMethod.GET,
                                 "/users/**",
                                 "/categories/**",
                                 "/jobs/**",
                                 "/enums/**",
-                                "/freelancers/**"
+                                "/freelancers/**",
+                                "/job-matches/**" // <-- BỔ SUNG Ở ĐÂY
                         ).permitAll()
+
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

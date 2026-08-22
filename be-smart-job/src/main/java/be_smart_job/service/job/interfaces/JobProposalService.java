@@ -18,7 +18,7 @@ public interface JobProposalService {
     void cancelProposal(String proposalId);
 
     // Client xem các đề xuất nhận được theo Job ID
-    List<JobProposalResponse> getProposalsByJob(String jobId, ProposalStatus status);
+    public List<JobProposalResponse> getProposalsByClient();
 
     // Client chấp nhận hoặc từ chối đề xuất
     JobProposalResponse respondToProposal(String proposalId, ProposalStatus status);

@@ -1,4 +1,7 @@
 package be_smart_job.service.job.interfaces;
 
-public class JobMatchService {
+import be_smart_job.dto.res.job.JobMatchResponse;
+
+public interface JobMatchService {
+    JobMatchResponse getMatchByJobAndFreelancer(String jobId, String freelancerId);
 }

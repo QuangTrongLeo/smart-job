@@ -38,7 +38,7 @@ public class JobProposalController {
         List<JobProposalResponse> list = proposalService.getMySentProposals();
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK.value(), "Lấy danh sách đề xuất thành công", list));
     }
-    
+
     // Freelancer hủy/xóa đơn ứng tuyển
     @DeleteMapping("/{id}/cancel")
     @PreAuthorize("hasRole('FREELANCER') or hasAuthority('FREELANCER')")
@@ -47,14 +47,12 @@ public class JobProposalController {
         return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK.value(), "Xóa đơn ứng tuyển thành công", null));
     }
 
-    // Client xem danh sách các đề xuất được gửi đến cho 1 Job cụ thể
-    @GetMapping("/job/{jobId}")
+    // Client xem danh sách tất cả các ứng tuyển gửi tới cho mình
+    @GetMapping("/client")
     @PreAuthorize("hasRole('CLIENT') or hasAuthority('CLIENT')")
-    public ResponseEntity<ApiResponse<List<JobProposalResponse>>> getProposalsByJob(
-            @PathVariable String jobId,
-            @RequestParam(required = false) ProposalStatus status) {
-        List<JobProposalResponse> list = proposalService.getProposalsByJob(jobId, status);
-        return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK.value(), "Lấy danh sách đề xuất theo Job thành công", list));
+    public ResponseEntity<ApiResponse<List<JobProposalResponse>>> getProposalsForClient() {
+        List<JobProposalResponse> response = proposalService.getProposalsByClient();
+        return ResponseEntity.ok(ApiResponse.of(HttpStatus.OK.value(), "Lấy danh sách ứng tuyển thành công", response));
     }
 
     // Client Phản hồi đề xuất (ACCEPTED hoặc REJECTED)

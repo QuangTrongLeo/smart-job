@@ -9,8 +9,8 @@ import be_smart_job.entity.Job;
 import be_smart_job.entity.JobMatch;
 import be_smart_job.entity.User;
 import be_smart_job.enums.MatchStatus;
-import be_smart_job.mapper.ai.JobMatchMapper;
-import be_smart_job.repository.ai.JobMatchRepository;
+import be_smart_job.mapper.ai.AiJobMatchMapper;
+import be_smart_job.repository.job.JobMatchRepository;
 import be_smart_job.repository.identity.UserRepository;
 import be_smart_job.repository.job.FreelancerProfileRepository;
 import be_smart_job.repository.job.JobRepository;
@@ -27,7 +27,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.*;
 
 @Slf4j
-@Service
+@Service("aiJobMatchServiceImpl")
 @RequiredArgsConstructor
 public class JobMatchServiceImpl implements JobMatchService {
 
@@ -35,7 +35,7 @@ public class JobMatchServiceImpl implements JobMatchService {
     private final FreelancerProfileRepository freelancerProfileRepository;
     private final UserRepository userRepository;
     private final JobMatchRepository jobMatchRepository;
-    private final JobMatchMapper jobMatchMapper;
+    private final AiJobMatchMapper aiJobMatchMapper;
 
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
@@ -87,7 +87,7 @@ public class JobMatchServiceImpl implements JobMatchService {
         jobMatch.setExplanation(aiAnalysis.getExplanation());
 
         JobMatch savedJobMatch = jobMatchRepository.save(jobMatch);
-        return jobMatchMapper.toResponse(savedJobMatch);
+        return aiJobMatchMapper.toResponse(savedJobMatch);
     }
 
     private AiMatchResultResponse evaluateMatchWithGemini(Job job, FreelancerProfile profile) {

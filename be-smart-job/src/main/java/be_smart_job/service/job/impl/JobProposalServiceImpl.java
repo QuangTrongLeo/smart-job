@@ -114,22 +114,25 @@ public class JobProposalServiceImpl implements JobProposalService {
     }
 
     @Override
-    public List<JobProposalResponse> getProposalsByJob(String jobId, ProposalStatus status) {
-        validateRole("CLIENT", "Chỉ Client sở hữu công việc mới có thể xem danh sách ứng tuyển!");
+    public List<JobProposalResponse> getProposalsByClient() {
+        // 1. Kiểm tra vai trò CLIENT
+        validateRole("CLIENT", "Chỉ Client mới có thể xem danh sách ứng tuyển!");
+
+        // 2. Lấy ID của Client đang đăng nhập từ Security Context
         String currentClientId = resolveUserId(SecurityUtils.getCurrentUserId());
 
-        Job job = jobRepository.findById(jobId)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy công việc!"));
+        // 3. Tìm tất cả JobProposal theo client_id của Client hiện tại
+        List<JobProposal> proposals = proposalRepository.findByClientId(currentClientId);
 
-        if (!resolveUserId(job.getClientId()).equals(currentClientId)) {
-            throw new AccessDeniedException("Bạn không phải chủ sở hữu công việc này!");
-        }
-
-        List<JobProposal> proposals = (status != null)
-                ? proposalRepository.findByJobIdAndStatusOrderByCreatedAtDesc(jobId, status)
-                : proposalRepository.findByJobIdOrderByCreatedAtDesc(jobId);
-
-        return proposals.stream().map(this::mapToResponse).toList();
+        // 4. Map dữ liệu sang DTO Response và Sắp xếp
+        return proposals.stream()
+                .map(this::mapToResponse)
+                .sorted((p1, p2) -> {
+                    if (p1.getCreatedAt() == null) return 1;
+                    if (p2.getCreatedAt() == null) return -1;
+                    return p2.getCreatedAt().compareTo(p1.getCreatedAt()); // Giảm dần theo thời gian tạo
+                })
+                .toList();
     }
 
     @Override

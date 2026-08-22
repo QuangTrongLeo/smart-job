@@ -11,7 +11,7 @@ import be_smart_job.entity.Roadmap;
 import be_smart_job.entity.RoadmapStep;
 import be_smart_job.entity.User;
 import be_smart_job.mapper.ai.RoadmapMapper;
-import be_smart_job.repository.ai.JobMatchRepository;
+import be_smart_job.repository.job.JobMatchRepository;
 import be_smart_job.repository.ai.RoadmapRepository;
 import be_smart_job.repository.ai.RoadmapStepRepository;
 import be_smart_job.repository.identity.UserRepository;
